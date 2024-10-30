@@ -1,0 +1,16 @@
+{
+  "name": "update-segment-functions",
+  "version": "1.0.0",
+  "description": "This repository holds a github actions developed to sync functions within the repository with Segment.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.11.1",
+    "@actions/github": "^6.0.0"
+  }
+}

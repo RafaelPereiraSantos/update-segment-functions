@@ -1,0 +1,13 @@
+name: 'Update Segment Functions'
+description: 'Updates functions on segment with the source code present in a given repository.'
+inputs:
+  authorization-token:
+    description: 'The authorization token used to access Segment public APIs of your account.'
+    required: true
+    default: ''
+outputs:
+  time: # id of output
+    description: 'The time we greeted you'
+runs:
+  using: 'node20'
+  main: 'index.js'
