@@ -48,8 +48,10 @@ const listChangedFunctionsAndSettings = async () => {
   if (!filePaths) return [];
 
   const configFile = file => /.yaml$|.YAML$|.yml$/i.test(file);
-  const codeFile  = file => /.js$/i.test(file);
-  const configOrCodeFile = file => configFile(file) || codeFile(file);
+  const codeFile = file => /.js$/i.test(file);
+  const testFile = file => /.test.js/i.test(file);
+  const onlyCodeFile = file => codeFile(file) && !testFile(file);
+  const configOrCodeFile = file => configFile(file) || onlyCodeFile(file);
 
   const filesOfInterest = filePaths.filter(configOrCodeFile);
   const pathsOfInterest = [];
@@ -74,7 +76,7 @@ const listChangedFunctionsAndSettings = async () => {
     var configFileName = null;
 
     const defineAsConfigOrCode = file => {
-      if (codeFile(file)) {
+      if (onlyCodeFile(file)) {
         codeFileName = file;
 
         return;
