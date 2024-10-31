@@ -118,14 +118,21 @@ var prepareSettings = (settingsPath) => {
   const fileData = fs.readFileSync(settingsPath, 'utf8')
   const doc = yaml.load(fileData);
 
-  if (!doc.description) throw new Error('missing description');
-  if (!doc.label) throw new Error('missing label');
-  if (!doc.name) throw new Error('missing name');
-  if (!doc.required) throw new Error('missing required');
-  if (!doc.sensitive) throw new Error('missing sensitive');
-  if (!doc.type) throw new Error('missing type');
+  if (!doc.displayName) throw new Error('missing displayName');
+  if (!doc.resourceType) throw new Error('missing resourceType');
 
-  return doc
+  if (!doc.settings) {
+    doc.settings.forEach(setting => {
+      if (!setting.name) throw new Error('settings present but missing name')
+      if (!setting.label) throw new Error('settings present but missing label')
+      if (!setting.description) throw new Error('settings present but missing description')
+      if (!setting.required) throw new Error('settings present but missing required')
+      if (!setting.sensitive) throw new Error('settings present but missing sensitive')
+      if (!setting.type) throw new Error('settings present but missing type')
+    });
+  };
+
+  return doc;
 };
 /**
  * This function checks if the response returned by Segment was OK and the function was properly updated.
