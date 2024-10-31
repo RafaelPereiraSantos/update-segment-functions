@@ -7,6 +7,11 @@ const yaml = require('js-yaml');
 const segmentFunctionsURL = 'https://api.segmentapis.com/functions';
 const contentType = 'application/json';
 
+/**
+ * This function retrieve the authorization token that will be used to authenticate with Segment.
+ *
+ * @returns {String} The raw authentication token.
+ */
 const authToken = () => {
   const token = core.getInput('authorization-token');
   if (!authToken) throw new Error('authorization token can not be blank');
@@ -14,6 +19,14 @@ const authToken = () => {
   return token;
 };
 
+/**
+ * This functions is responsible for checking which files had changed between the current branch and the one that was
+ * merged into the current branch and then listing the javascript and yaml files that had changed to be used later
+ * as the payload to update the functions on Segment with the code and info of the function.
+ *
+ * @returns {[Object]} A list of objects containing the pair of javascript and yaml files that must be update into
+ * Segment.
+ */
 const listChangedFunctionsAndSettings = async () => {
   const sourceBranch = process.env.GITHUB_REF_NAME;
   const currentBranch = process.env.GITHUB_BASE_REF;
@@ -87,8 +100,20 @@ const listChangedFunctionsAndSettings = async () => {
   return functionsAndSettingsToUpdate;
 };
 
+/**
+ * This function extracts the source code from a function to be sent to Segment.
+ *
+ * @param {String} functionPath The path of the function.
+ * @returns {String} The source code of the function present at the given path.
+ */
 const extractCode = (functionPath) => fs.readFileSync(functionPath, 'utf8');
 
+/**
+ * This function reads the content of a yaml file and prepare a object with all alike its structure.
+ *
+ * @param {String} settingsPath The path of the yaml file to be read and converted.
+ * @returns {Object} An object containg all configuration info inside the yaml file.
+ */
 var prepareSettings = (settingsPath) => {
   const fileData = fs.readFileSync(settingsPath, 'utf8')
   const doc = yaml.load(fileData);
@@ -102,21 +127,11 @@ var prepareSettings = (settingsPath) => {
 
   return doc
 };
-
-const buildFunctionHeaders = (token) => {
-  return {
-    'Authorization': `Beader ${token}`,
-    'Content-Type': contentType,
-  };
-};
-
-const buildFunctionPayload = (code, settings) => {
-  return {
-    code,
-    settings,
-  };
-};
-
+/**
+ * This function checks if the response returned by Segment was OK and the function was properly updated.
+ *
+ * @param {Response} response The response from Segment request.
+ */
 const handleResponse = (response) => {
   if (!response.status === 200) throw new Error(`function was not updated. status code: [${response.status}]`);
 };
@@ -126,8 +141,14 @@ const updateSegmentFunction = async (token, functionPath, functionPath) => {
   const settings = prepareSettings(functionPath);
 
   const method = 'POST';
-  const headers = buildFunctionHeaders(token);
-  const body = buildFunctionPayload(code, settings);
+  const headers = {
+    'Authorization': `Beader ${token}`,
+    'Content-Type': contentType,
+  };
+  const body = {
+    code,
+    settings,
+  };
 
   const options = {
     method,
@@ -140,6 +161,10 @@ const updateSegmentFunction = async (token, functionPath, functionPath) => {
   handleResponse(response);
 };
 
+/**
+ * This function checks all functions within the repository that had undergone changes in either the code or the
+ * configurations to update them later on Segment with the new code and/or configurations.
+ */
 const updateSegmentFunctions = async () => {
   const token = authToken();
   const functionsAndSettings = listChangedFunctionsAndSettings();
