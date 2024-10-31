@@ -1,8 +1,8 @@
 const core = require('@actions/core');
-const github = require('@actions/github');
 const exec = require('@actions/exec');
 
 const fs = require('fs');
+const yaml = require('js-yaml');
 
 const segmentFunctionsURL = 'https://api.segmentapis.com/functions';
 const contentType = 'application/json';
@@ -89,8 +89,18 @@ const listChangedFunctionsAndSettings = async () => {
 
 const extractCode = (functionPath) => fs.readFileSync(functionPath, 'utf8');
 
-const prepareSettings = (settingsPath) => {
+var prepareSettings = (settingsPath) => {
+  const fileData = fs.readFileSync(settingsPath, 'utf8')
+  const doc = yaml.load(fileData);
 
+  if (!doc.description) throw new Error('missing description');
+  if (!doc.label) throw new Error('missing label');
+  if (!doc.name) throw new Error('missing name');
+  if (!doc.required) throw new Error('missing required');
+  if (!doc.sensitive) throw new Error('missing sensitive');
+  if (!doc.type) throw new Error('missing type');
+
+  return doc
 };
 
 const buildFunctionHeaders = (token) => {
@@ -125,7 +135,7 @@ const updateSegmentFunction = async (token, functionPath, functionPath) => {
     body
   };
 
-  const response = await fetch('POST', options);
+  const response = await fetch(segmentFunctionsURL, options);
 
   handleResponse(response);
 };
@@ -135,7 +145,7 @@ const updateSegmentFunctions = async () => {
   const functionsAndSettings = listChangedFunctionsAndSettings();
 
   for (let i = 0; i < functionsAndSettings.length; i++) {
-    functionAndSetting = functionsAndSettings[i];
+    const functionAndSetting = functionsAndSettings[i];
 
     await updateSegmentFunction(
       token,
