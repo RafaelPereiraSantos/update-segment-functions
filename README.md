@@ -21,7 +21,7 @@ Inside the yaml file there must be the following fields:
 ## Example usage
 
 ```yaml
-uses: RafaelPereiraSantos/update-segment-functions@v1
+uses: RafaelPereiraSantos/update-segment-functions@v1.1
 with:
   authorization-token: my-secret-token
 ```
