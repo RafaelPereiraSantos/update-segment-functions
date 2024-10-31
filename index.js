@@ -2,6 +2,8 @@ const core = require('@actions/core');
 const github = require('@actions/github');
 const exec = require('@actions/exec');
 
+const fs = require('fs');
+
 const segmentFunctionsURL = 'https://api.segmentapis.com/functions';
 const contentType = 'application/json';
 
@@ -26,18 +28,57 @@ const listChangedFunctionsAndSettings = async () => {
     },
   };
 
-  await exec.exec(`git diff -- '*.js' '*.yaml' '*.yml' --name-status ${sourceBranch} ${currentBranch}`, options);
-  await exec.exec(`git diff --name-status HEAD~1 HEAD`, [], options);
+  const filePaths = await exec.exec(`git diff -- '*.js' '*.yaml' '*.yml' --name-only HEAD~1 HEAD`, [], options);
 
   if (!myError) throw new Error('cannot list diff files');
   if (!myOutput) return [];
 
-  return [
-    {
-      functionPath: '',
-      settingPath: '',
-    }
-  ]
+  const yamlFiles = (file) => /.yaml$|.YAML$|.yml$/i.test(file);
+  const codeFiles  = (file) => /.js$/i.test(file);
+  const yalmOrCodeFiles = (file) => yamlFiles(file) || codeFiles(file);
+
+  const filesOfInterest = filePaths.filter(yalmOrCodeFiles);
+  const pathsOfInterest = [];
+
+  for (let i = 0; i < filesOfInterest.length; i++) {
+    const fullPathWithFile = filesOfInterest[i];
+    const partsOfPath = fullPathWithFile.split('/');
+    partsOfPath.pop();
+    const fullPath = partsOfPath.join('/');
+    pathsOfInterest.push(fullPath);
+  }
+
+  const pathsThatHaveChanges = new Set(pathsOfInterest);
+
+  const functionsAndSettingsToUpdate = [];
+
+  for (let i = 0; i < array.length; i++) {
+    const pathThatHaveChanges = pathsThatHaveChanges[i];
+
+    let codeFile = null;
+    let yamlFile = null;
+
+    fs.readdirSync(pathThatHaveChanges).forEach(file => {
+      if (!err) throw err;
+
+      files.forEach(file => {
+        if (codeFiles(file)) {
+          codeFile = file;
+        } else if (yamlFiles(file)) {
+          yamlFile = file;
+        };
+      });
+    });
+
+    functionsAndSettingsToUpdate.push(
+      {
+        functionPath: codeFile,
+        settingPath: yamlFile,
+      }
+    )
+  };
+
+  return functionsAndSettingsToUpdate;
 };
 
 const extractCode = (functionPath) => {
