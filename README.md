@@ -1,7 +1,16 @@
 # update-segment-functions
 This repository holds a github actions developed to sync functions within the repository with Segment.
 
-This action prints "Hello World" or "Hello" + the name of a person to greet to the log.
+Each function must be in a separated folder that contains the function code in a javascript file and a configuration
+file in a yaml formatted file.
+
+Inside the yaml file there must be the following fields:
+ - description
+ - label
+ - name
+ - required
+ - sensitive
+ - type
 
 ## Inputs
 
@@ -9,16 +18,10 @@ This action prints "Hello World" or "Hello" + the name of a person to greet to t
 
 **Required** The authorization token used to access Segment public APIs of your account. Default `""`.
 
-## Outputs
-
-### `time`
-
-The time we greeted you.
-
 ## Example usage
 
 ```yaml
-uses: actions/update-segment-functions@v1
+uses: RafaelPereiraSantos/update-segment-functions@v1
 with:
   authorization-token: my-secret-token
 ```
