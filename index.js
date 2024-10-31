@@ -16,35 +16,39 @@ const authToken = () => {
 
 const listChangedFunctionsAndSettings = async () => {
   const sourceBranch = process.env.GITHUB_REF_NAME;
-  const currentBranch = proces.env.GITHUB_BASE_REF;
+  const currentBranch = process.env.GITHUB_BASE_REF;
 
   let myOutput = '';
   let myError = '';
 
   const options = {
     listeners : {
-      stdout: (data) => { myOutput += data.toString() },
-      stderr: (data) => { myError += data.toString() },
+      stdout: data => { myOutput += data.toString() },
+      stderr: data => { myError += data.toString() },
     },
   };
 
-  const filePaths = await exec.exec(`git diff -- '*.js' '*.yaml' '*.yml' --name-only HEAD~1 HEAD`, [], options);
+  await exec.exec(`git diff --name-only ${sourceBranch} ${currentBranch}`, [], options);
+  const filePaths = myOutput.split('\n');
 
   if (!myError) throw new Error('cannot list diff files');
-  if (!myOutput) return [];
+  if (!filePaths) return [];
 
-  const yamlFiles = (file) => /.yaml$|.YAML$|.yml$/i.test(file);
-  const codeFiles  = (file) => /.js$/i.test(file);
-  const yalmOrCodeFiles = (file) => yamlFiles(file) || codeFiles(file);
+  const configFile = file => /.yaml$|.YAML$|.yml$/i.test(file);
+  const codeFile  = file => /.js$/i.test(file);
+  const configOrCodeFile = file => configFile(file) || codeFile(file);
 
-  const filesOfInterest = filePaths.filter(yalmOrCodeFiles);
+  const filesOfInterest = filePaths.filter(configOrCodeFile);
   const pathsOfInterest = [];
 
   for (let i = 0; i < filesOfInterest.length; i++) {
     const fullPathWithFile = filesOfInterest[i];
     const partsOfPath = fullPathWithFile.split('/');
+
     partsOfPath.pop();
+
     const fullPath = partsOfPath.join('/');
+
     pathsOfInterest.push(fullPath);
   }
 
@@ -52,38 +56,38 @@ const listChangedFunctionsAndSettings = async () => {
 
   const functionsAndSettingsToUpdate = [];
 
-  for (let i = 0; i < array.length; i++) {
-    const pathThatHaveChanges = pathsThatHaveChanges[i];
+  pathsThatHaveChanges.forEach(pathThatHaveChanges => {
+    var codeFileName = null;
+    var configFileName = null;
 
-    let codeFile = null;
-    let yamlFile = null;
+    const defineAsConfigOrCode = file => {
+      if (codeFile(file)) {
+        codeFileName = file;
 
-    fs.readdirSync(pathThatHaveChanges).forEach(file => {
-      if (!err) throw err;
+        return;
+      }
 
-      files.forEach(file => {
-        if (codeFiles(file)) {
-          codeFile = file;
-        } else if (yamlFiles(file)) {
-          yamlFile = file;
-        };
-      });
-    });
+      if (configFile(file)) {
+        configFileName = file;
+      };
+    }
+
+    fs.readdirSync(pathThatHaveChanges).forEach(defineAsConfigOrCode);
+
+    const buildPath = fileName => pathThatHaveChanges + '/' + fileName;
 
     functionsAndSettingsToUpdate.push(
       {
-        functionPath: codeFile,
-        settingPath: yamlFile,
+        functionPath: buildPath(codeFileName),
+        settingPath: buildPath(configFileName),
       }
     )
-  };
+  });
 
   return functionsAndSettingsToUpdate;
 };
 
-const extractCode = (functionPath) => {
-
-};
+const extractCode = (functionPath) => fs.readFileSync(functionPath, 'utf8');
 
 const prepareSettings = (settingsPath) => {
 
@@ -107,9 +111,9 @@ const handleResponse = (response) => {
   if (!response.status === 200) throw new Error(`function was not updated. status code: [${response.status}]`);
 };
 
-const updateSegmentFunction = async (token, functionAddress, settingAddress) => {
-  const code = extractCode(functionAddress);
-  const settings = prepareSettings(settingAddress);
+const updateSegmentFunction = async (token, functionPath, functionPath) => {
+  const code = extractCode(functionPath);
+  const settings = prepareSettings(functionPath);
 
   const method = 'POST';
   const headers = buildFunctionHeaders(token);
