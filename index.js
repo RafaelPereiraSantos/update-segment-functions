@@ -164,6 +164,14 @@ const handleResponse = async (response) => {
   }
 };
 
+/**
+ * This function updates a function on Segment with the new code and configurations.
+ *
+ * @param {String} token The authentication token that will be used to authenticate with Segment.
+ * @param {String} functionPath The path of the function that will be updated.
+ * @param {String} settingsPath  The path of the yaml file that contains the configurations of the function.
+ * @returns {Promise<void>} A promise that resolves when the function was successfully updated on Segment.
+ */
 const updateSegmentFunction = async (token, functionPath, settingsPath) => {
   const code = extractCode(functionPath);
   const settings = prepareSettings(settingsPath);
