@@ -44,7 +44,7 @@ const listChangedFunctionsAndSettings = async () => {
   await exec.exec(`git diff --name-only ${sourceBranch} ${currentBranch}`, [], options);
   const filePaths = myOutput.split('\n');
 
-  if (!myError) throw new Error('cannot list diff files');
+  if (!!myError) throw new Error(`cannot list diff files, error: [${myError}]`);
   if (!filePaths) return [];
 
   const configFile = file => /.yaml$|.YAML$|.yml$/i.test(file);
@@ -122,7 +122,7 @@ var prepareSettings = (settingsPath) => {
 
   if (!doc.functionID) throw new Error('missing functionID');
 
-  if (!doc.settings) {
+  if (doc.settings) {
     doc.settings.forEach(setting => {
       if (!setting.name) throw new Error('settings present but missing name')
       if (!setting.label) throw new Error('settings present but missing label')
@@ -139,7 +139,7 @@ var prepareSettings = (settingsPath) => {
 /**
  * This function is responsible for generating the URL that will be used to update a function on Segment.
  *
- * @param {String} functionID
+ * @param {String} functionID The ID of the function that will be updated.
  * @returns {String} The URL that will be used to update the function on Segment.
  */
 const buildSegmentPatchURL = (functionID) => `${segmentFunctionsURL}/${functionID}`;
@@ -153,29 +153,35 @@ const handleResponse = async (response) => {
   const status = response.status;
 
   if (status !== 200) {
-    const errors = await response.json();
+    const body = await response.json();
+    let errors = '';
+
+    body.errors.forEach(error => {
+      errors += error.message;
+    });
+
     throw new Error(`function was not updated, status code: [${status}], errors: [${errors}]`);
   }
 };
 
-const updateSegmentFunction = async (token, functionPath, functionPath) => {
+const updateSegmentFunction = async (token, functionPath, settingsPath) => {
   const code = extractCode(functionPath);
-  const settings = prepareSettings(functionPath);
+  const settings = prepareSettings(settingsPath);
 
   const method = 'PATCH';
   const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': contentType,
   };
-  const body = {
+  const payload = {
     code,
-    settings,
+    ...settings,
   };
 
   const options = {
     method,
     headers,
-    body
+    body: JSON.stringify(payload),
   };
 
   const response = await fetch(
@@ -192,7 +198,7 @@ const updateSegmentFunction = async (token, functionPath, functionPath) => {
  */
 const updateSegmentFunctions = async () => {
   const token = authToken();
-  const functionsAndSettings = listChangedFunctionsAndSettings();
+  const functionsAndSettings = await listChangedFunctionsAndSettings();
 
   for (let i = 0; i < functionsAndSettings.length; i++) {
     const functionAndSetting = functionsAndSettings[i];
@@ -202,11 +208,11 @@ const updateSegmentFunctions = async () => {
       functionAndSetting.functionPath,
       functionAndSetting.settingPath,
     )
-  }
+  };
 };
 
 try {
   await updateSegmentFunctions();
 } catch (error) {
   core.setFailed(error.message);
-}
+};
