@@ -34,7 +34,7 @@ Please refers to the `my_function_settings.yaml`inside the example_function fold
 ## Example usage
 
 ```yaml
-uses: RafaelPereiraSantos/update-segment-functions@v1.3
+uses: RafaelPereiraSantos/update-segment-functions@v1.4
 with:
   authorization-token: my-secret-token
 ```
