@@ -220,7 +220,7 @@ const updateSegmentFunctions = async () => {
 };
 
 try {
-  await updateSegmentFunctions();
+  updateSegmentFunctions();
 } catch (error) {
   core.setFailed(error.message);
 };
