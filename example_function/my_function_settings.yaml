@@ -1,12 +1,11 @@
-functionID: id
+functionID: sfnc_1xrMxmOAqi
 settings:
   - name: 'Function API key'
-    label: 'api key'
+    label: 'apiKey'
     description: 'function API key'
     required: true
     sensitive: true
     type: 'STRING'
 displayName: my function
-logoUrl: logo.url
 resourceType: "DESTINATION"
 description: my function description
