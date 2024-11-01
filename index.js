@@ -120,8 +120,7 @@ var prepareSettings = (settingsPath) => {
   const fileData = fs.readFileSync(settingsPath, 'utf8')
   const doc = yaml.load(fileData);
 
-  if (!doc.displayName) throw new Error('missing displayName');
-  if (!doc.resourceType) throw new Error('missing resourceType');
+  if (!doc.functionID) throw new Error('missing functionID');
 
   if (!doc.settings) {
     doc.settings.forEach(setting => {
@@ -136,22 +135,36 @@ var prepareSettings = (settingsPath) => {
 
   return doc;
 };
+
+/**
+ * This function is responsible for generating the URL that will be used to update a function on Segment.
+ *
+ * @param {String} functionID
+ * @returns {String} The URL that will be used to update the function on Segment.
+ */
+const buildSegmentPatchURL = (functionID) => `${segmentFunctionsURL}/${functionID}`;
+
 /**
  * This function checks if the response returned by Segment was OK and the function was properly updated.
  *
  * @param {Response} response The response from Segment request.
  */
-const handleResponse = (response) => {
-  if (!response.status === 200) throw new Error(`function was not updated. status code: [${response.status}]`);
+const handleResponse = async (response) => {
+  const status = response.status;
+
+  if (status !== 200) {
+    const errors = await response.json();
+    throw new Error(`function was not updated, status code: [${status}], errors: [${errors}]`);
+  }
 };
 
 const updateSegmentFunction = async (token, functionPath, functionPath) => {
   const code = extractCode(functionPath);
   const settings = prepareSettings(functionPath);
 
-  const method = 'POST';
+  const method = 'PATCH';
   const headers = {
-    'Authorization': `Beader ${token}`,
+    'Authorization': `Bearer ${token}`,
     'Content-Type': contentType,
   };
   const body = {
@@ -165,7 +178,10 @@ const updateSegmentFunction = async (token, functionPath, functionPath) => {
     body
   };
 
-  const response = await fetch(segmentFunctionsURL, options);
+  const response = await fetch(
+    buildSegmentPatchURL(settings.functionID),
+    options,
+  );
 
   handleResponse(response);
 };

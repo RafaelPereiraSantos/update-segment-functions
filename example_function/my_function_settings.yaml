@@ -1,3 +1,4 @@
+functionID: id
 settings:
   - name: 'Function API key'
     label: 'api key'

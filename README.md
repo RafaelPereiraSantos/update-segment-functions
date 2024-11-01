@@ -4,8 +4,12 @@ This repository holds a github actions developed to sync functions within the re
 Each function must be in a separated folder that contains the function code in a javascript file and a configuration
 file in a yaml formatted file.
 
+The function must exist on Segment previously, this action only updates an existing function, it does not create one
+from the scratch, the code and settings can be managed by this action but not the creation of the function itself.
+
 The yaml file should be composed by the following settings:
-- displayName: (required)
+- functionID: (optional) The ID of a function previously created on Segment.
+- displayName: (optional)
 - logoUrl: (optional)
 - resourceType: (required) ex: DESTINATION INSERT_DESTINATION SOURCE
 - description: (optional)
