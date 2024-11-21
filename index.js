@@ -152,11 +152,14 @@ const buildSegmentPatchURL = (functionID) => `${segmentFunctionsURL}/${functionI
 const handleResponse = async (response) => {
   const status = response.status;
 
+  core.info(`status: ${status}`);
+
   if (status !== 200) {
     const body = await response.json();
     let errors = '';
 
     body.errors.forEach(error => {
+      core.info(`error: ${error}`);
       errors += error.message;
     });
 
@@ -205,11 +208,20 @@ const updateSegmentFunction = async (token, functionPath, settingsPath) => {
  * configurations to update them later on Segment with the new code and/or configurations.
  */
 const updateSegmentFunctions = async () => {
+  core.info('updateSegmentFunctions');
+
   const token = authToken();
+
+  core.info(token);
+
   const functionsAndSettings = await listChangedFunctionsAndSettings();
+
+  core.info(functionsAndSettings);
 
   for (let i = 0; i < functionsAndSettings.length; i++) {
     const functionAndSetting = functionsAndSettings[i];
+
+    core.info(functionsAndSettings);
 
     await updateSegmentFunction(
       token,
