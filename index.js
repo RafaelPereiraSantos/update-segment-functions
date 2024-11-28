@@ -32,6 +32,8 @@ const listChangedFunctionsAndSettings = async () => {
   const sourceBranch = process.env.GITHUB_REF_NAME;
   const currentBranch = process.env.GITHUB_HEAD_REF;
 
+  core.info(process.env);
+
   let myOutput = '';
   let myError = '';
 
