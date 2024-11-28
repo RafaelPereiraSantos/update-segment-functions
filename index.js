@@ -43,6 +43,7 @@ const listChangedFunctionsAndSettings = async () => {
   };
 
   core.info('listChangedFunctionsAndSettings2');
+  core.info(`git diff --name-only ${sourceBranch} ${currentBranch}`);
 
   await exec.exec(`git diff --name-only ${sourceBranch} ${currentBranch}`, [], options);
   const filePaths = myOutput.split('\n');
