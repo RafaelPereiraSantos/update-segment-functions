@@ -59,6 +59,8 @@ const listChangedFunctionsAndSettings = async () => {
   const filesOfInterest = filePaths.filter(configOrCodeFile);
   const pathsOfInterest = [];
 
+  core.info(filesOfInterest);
+
   for (let i = 0; i < filesOfInterest.length; i++) {
     const fullPathWithFile = filesOfInterest[i];
     const partsOfPath = fullPathWithFile.split('/');
@@ -70,6 +72,8 @@ const listChangedFunctionsAndSettings = async () => {
     pathsOfInterest.push(fullPath);
   }
 
+  core.info(pathsOfInterest);
+
   const pathsThatHaveChanges = new Set(pathsOfInterest);
 
   const functionsAndSettingsToUpdate = [];
@@ -77,6 +81,9 @@ const listChangedFunctionsAndSettings = async () => {
   core.info('listChangedFunctionsAndSettings3');
 
   pathsThatHaveChanges.forEach(pathThatHaveChanges => {
+
+    core.info('pathsThatHaveChanges.forEach');
+
     var codeFileName = null;
     var configFileName = null;
 
@@ -223,7 +230,9 @@ const updateSegmentFunctions = async () => {
 
   const functionsAndSettings = await listChangedFunctionsAndSettings();
 
+  core.info('functionsAndSettings');
   core.info(functionsAndSettings);
+  core.info('functionsAndSettings');
 
   for (let i = 0; i < functionsAndSettings.length; i++) {
     const functionAndSetting = functionsAndSettings[i];
