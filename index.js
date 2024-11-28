@@ -30,7 +30,7 @@ const authToken = () => {
 const listChangedFunctionsAndSettings = async () => {
   core.info('listChangedFunctionsAndSettings1');
   const sourceBranch = process.env.GITHUB_REF_NAME;
-  const currentBranch = process.env.GITHUB_BASE_REF;
+  const currentBranch = process.env.GITHUB_HEAD_REF;
 
   let myOutput = '';
   let myError = '';
