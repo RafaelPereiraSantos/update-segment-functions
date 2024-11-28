@@ -28,6 +28,7 @@ const authToken = () => {
  * Segment.
  */
 const listChangedFunctionsAndSettings = async () => {
+  core.info('listChangedFunctionsAndSettings1');
   const sourceBranch = process.env.GITHUB_REF_NAME;
   const currentBranch = process.env.GITHUB_BASE_REF;
 
@@ -40,6 +41,8 @@ const listChangedFunctionsAndSettings = async () => {
       stderr: data => { myError += data.toString() },
     },
   };
+
+  core.info('listChangedFunctionsAndSettings2');
 
   await exec.exec(`git diff --name-only ${sourceBranch} ${currentBranch}`, [], options);
   const filePaths = myOutput.split('\n');
@@ -71,6 +74,8 @@ const listChangedFunctionsAndSettings = async () => {
 
   const functionsAndSettingsToUpdate = [];
 
+  core.info('listChangedFunctionsAndSettings3');
+
   pathsThatHaveChanges.forEach(pathThatHaveChanges => {
     var codeFileName = null;
     var configFileName = null;
@@ -98,6 +103,8 @@ const listChangedFunctionsAndSettings = async () => {
       }
     )
   });
+
+  core.info('listChangedFunctionsAndSettings4');
 
   return functionsAndSettingsToUpdate;
 };
