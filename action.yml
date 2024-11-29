@@ -7,12 +7,12 @@ inputs:
     default: ''
   github-token:
     description: 'A valid Github token to allow the action to have access to all files within a pull request. Please use the ${{ secrets.GITHUB_TOKEN }}.'
-    required: false
-    default: '${{ secrets.GITHUB_TOKEN }}'
+    required: true
+    default: ''
   pr-number:
     description: 'The number of the current pull request. Please use the ${{ github.event.issue.number }}.'
-    required: false
-    default: '${{ github.event.issue.number }}'
+    required: true
+    default: ''
 runs:
   using: 'node20'
   main: 'index.js'
