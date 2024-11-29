@@ -32,12 +32,11 @@ const listChangedFunctionsAndSettings = async () => {
   core.info('listChangedFunctionsAndSettings1');
 
   const octokit = github.getOctokit(core.getInput('github-token'));
-  const { pull_request } = github.context.payload;
   core.info('listChangedFunctionsAndSettings11');
   const { data: changedFiles } = await octokit.rest.pulls.listFiles({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
-    pull_number: pull_request.number,
+    pull_number: github.context.payload.pull_request.number,
   });
 
   core.info('listChangedFunctionsAndSettings111');
