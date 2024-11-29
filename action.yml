@@ -5,6 +5,10 @@ inputs:
     description: 'The authorization token used to access Segment public APIs of your account.'
     required: true
     default: ''
+  github-token:
+    description: 'The authorization token used to access Segment public APIs of your account.'
+    required: true
+    default: ''
 outputs:
   time: # id of output
     description: 'The time we greeted you'
