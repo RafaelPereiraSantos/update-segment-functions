@@ -47,8 +47,8 @@ const listChangedFunctionsAndSettings = async () => {
   const onlyCodeFile = file => codeFile(file) && !testFile(file);
   const configOrCodeFile = file => configFile(file) || onlyCodeFile(file);
 
-  const filesOfInterest = filePaths.filter(configOrCodeFile);
-  const pathsOfInterest = [];
+  // const filesOfInterest = filePaths.filter(configOrCodeFile);
+  // const pathsOfInterest = [];
 
   for (const changedFile of changedFiles) {
     const { filename } = changedFile.filename;
