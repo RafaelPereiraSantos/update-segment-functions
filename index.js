@@ -51,7 +51,7 @@ const listChangedFunctionsAndSettings = async () => {
   // const pathsOfInterest = [];
 
   for (const changedFile of changedFiles) {
-    const { filename } = changedFile.filename;
+    const { filename } = changedFile;
 
     core.info(`checking file '${filename}'`);
 
