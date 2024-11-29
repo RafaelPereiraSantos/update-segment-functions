@@ -49,9 +49,23 @@ file.
 ## Example usage
 
 ```yaml
-uses: RafaelPereiraSantos/update-segment-functions@v1.5.1
-with:
-  authorization-token: my-secret-token
+on:
+  issue_comment:
+    types: [created]
+jobs:
+  deploy-function:
+    if: ${{ github.event.issue.pull_request }}  && github.event.comment.body == '{your command favorite command in here}'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - uses: RafaelPereiraSantos/update-segment-functions@{version}
+        with:
+          authorization-token: ${{ github.event.issue.number }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.issue.number }}
 ```
 
 **Note:** Avoid using plain text secret, please try to use github secrets manager:

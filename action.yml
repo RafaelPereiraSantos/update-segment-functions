@@ -6,16 +6,13 @@ inputs:
     required: true
     default: ''
   github-token:
-    description: 'The authorization token used to access Segment public APIs of your account.'
-    required: true
-    default: ''
+    description: 'A valid Github token to allow the action to have access to all files within a pull request. Please use the ${{ secrets.GITHUB_TOKEN }}.'
+    required: false
+    default: '${{ secrets.GITHUB_TOKEN }}'
   pr-number:
-    description: 'The authorization token used to access Segment public APIs of your account.'
-    required: true
-    default: ''
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
+    description: 'The number of the current pull request. Please use the ${{ github.event.issue.number }}.'
+    required: false
+    default: '${{ github.event.issue.number }}'
 runs:
   using: 'node20'
   main: 'index.js'
