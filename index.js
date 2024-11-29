@@ -1,5 +1,6 @@
 const core = require('@actions/core');
 const exec = require('@actions/exec');
+const github = require('@actions/github');
 
 const fs = require('fs');
 const yaml = require('js-yaml');
@@ -29,29 +30,16 @@ const authToken = () => {
  */
 const listChangedFunctionsAndSettings = async () => {
   core.info('listChangedFunctionsAndSettings1');
-  const sourceBranch = process.env.GITHUB_REF_NAME;
-  const currentBranch = process.env.GITHUB_HEAD_REF;
 
-  core.info(process.env);
+  const octokit = github.getOctokit(core.getInput('github_token'));
+  core.info('listChangedFunctionsAndSettings11');
+  const { data: changedFiles } = await octokit.rest.pulls.listFiles({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    pull_number: pull_request.number,
+  });
 
-  let myOutput = '';
-  let myError = '';
-
-  const options = {
-    listeners : {
-      stdout: data => { myOutput += data.toString() },
-      stderr: data => { myError += data.toString() },
-    },
-  };
-
-  core.info('listChangedFunctionsAndSettings2');
-  core.info(`git diff --name-only ${sourceBranch} ${currentBranch}`);
-
-  await exec.exec(`git diff --name-only main test08`, [], options);
-  const filePaths = myOutput.split('\n');
-
-  if (!!myError) throw new Error(`cannot list diff files, error: [${myError}]`);
-  if (!filePaths) return [];
+  core.info('listChangedFunctionsAndSettings111');
 
   const configFile = file => /.yaml$|.YAML$|.yml$/i.test(file);
   const codeFile = file => /.js$/i.test(file);
@@ -61,6 +49,16 @@ const listChangedFunctionsAndSettings = async () => {
 
   const filesOfInterest = filePaths.filter(configOrCodeFile);
   const pathsOfInterest = [];
+
+  for (const changedFile of changedFiles) {
+    const { filename } = changedFile.filename;
+
+    core.info(`checking file '${filename}'`);
+
+    if (configOrCodeFile(filename)){
+      pathsOfInterest.push(filename);
+    }
+  }
 
   core.info(filesOfInterest);
 
