@@ -1,5 +1,5 @@
 const core = require('@actions/core');
-const exec = require('@actions/exec');
+const github = require('@actions/github');
 
 const fs = require('fs');
 const yaml = require('js-yaml');
@@ -28,24 +28,12 @@ const authToken = () => {
  * Segment.
  */
 const listChangedFunctionsAndSettings = async () => {
-  const sourceBranch = process.env.GITHUB_REF_NAME;
-  const currentBranch = process.env.GITHUB_BASE_REF;
-
-  let myOutput = '';
-  let myError = '';
-
-  const options = {
-    listeners : {
-      stdout: data => { myOutput += data.toString() },
-      stderr: data => { myError += data.toString() },
-    },
-  };
-
-  await exec.exec(`git diff --name-only ${sourceBranch} ${currentBranch}`, [], options);
-  const filePaths = myOutput.split('\n');
-
-  if (!!myError) throw new Error(`cannot list diff files, error: [${myError}]`);
-  if (!filePaths) return [];
+  const octokit = github.getOctokit(core.getInput('github-token'));
+  const { data: changedFiles } = await octokit.rest.pulls.listFiles({
+    owner: github.context.repo.owner,
+    repo: github.context.repo.repo,
+    pull_number: core.getInput('pr-number'),
+  });
 
   const configFile = file => /.yaml$|.YAML$|.yml$/i.test(file);
   const codeFile = file => /.js$/i.test(file);
@@ -53,18 +41,23 @@ const listChangedFunctionsAndSettings = async () => {
   const onlyCodeFile = file => codeFile(file) && !testFile(file);
   const configOrCodeFile = file => configFile(file) || onlyCodeFile(file);
 
-  const filesOfInterest = filePaths.filter(configOrCodeFile);
+  const filesOfInterest = [];
   const pathsOfInterest = [];
 
-  for (let i = 0; i < filesOfInterest.length; i++) {
-    const fullPathWithFile = filesOfInterest[i];
-    const partsOfPath = fullPathWithFile.split('/');
+  for (const changedFile of changedFiles) {
+    const filePath = changedFile.filename;
 
-    partsOfPath.pop();
+    if (configOrCodeFile(filePath)){
+      filesOfInterest.push(filePath);
 
-    const fullPath = partsOfPath.join('/');
+      const partsOfPath = filePath.split('/');
 
-    pathsOfInterest.push(fullPath);
+      partsOfPath.pop();
+
+      const fullPath = partsOfPath.join('/');
+
+      pathsOfInterest.push(fullPath);
+    }
   }
 
   const pathsThatHaveChanges = new Set(pathsOfInterest);
@@ -157,6 +150,7 @@ const handleResponse = async (response) => {
     let errors = '';
 
     body.errors.forEach(error => {
+      core.info(`error: ${error}`);
       errors += error.message;
     });
 
