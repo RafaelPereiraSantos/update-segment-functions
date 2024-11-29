@@ -1,5 +1,4 @@
 const core = require('@actions/core');
-const exec = require('@actions/exec');
 const github = require('@actions/github');
 
 const fs = require('fs');
@@ -29,17 +28,12 @@ const authToken = () => {
  * Segment.
  */
 const listChangedFunctionsAndSettings = async () => {
-  core.info('listChangedFunctionsAndSettings1');
-
   const octokit = github.getOctokit(core.getInput('github-token'));
-  core.info('listChangedFunctionsAndSettings11');
   const { data: changedFiles } = await octokit.rest.pulls.listFiles({
     owner: github.context.repo.owner,
     repo: github.context.repo.repo,
     pull_number: core.getInput('pr-number'),
   });
-
-  core.info('listChangedFunctionsAndSettings111');
 
   const configFile = file => /.yaml$|.YAML$|.yml$/i.test(file);
   const codeFile = file => /.js$/i.test(file);
@@ -53,8 +47,6 @@ const listChangedFunctionsAndSettings = async () => {
   for (const changedFile of changedFiles) {
     const filePath = changedFile.filename;
 
-    core.info(`checking file '${filePath}'`);
-
     if (configOrCodeFile(filePath)){
       filesOfInterest.push(filePath);
 
@@ -64,25 +56,15 @@ const listChangedFunctionsAndSettings = async () => {
 
       const fullPath = partsOfPath.join('/');
 
-      core.info(`adding path '${fullPath}'`);
-
       pathsOfInterest.push(fullPath);
     }
   }
-
-  core.info(filesOfInterest);
-  core.info(pathsOfInterest);
 
   const pathsThatHaveChanges = new Set(pathsOfInterest);
 
   const functionsAndSettingsToUpdate = [];
 
-  core.info('listChangedFunctionsAndSettings3');
-
   pathsThatHaveChanges.forEach(pathThatHaveChanges => {
-
-    core.info('pathsThatHaveChanges.forEach');
-
     var codeFileName = null;
     var configFileName = null;
 
@@ -109,8 +91,6 @@ const listChangedFunctionsAndSettings = async () => {
       }
     )
   });
-
-  core.info('listChangedFunctionsAndSettings4');
 
   return functionsAndSettingsToUpdate;
 };
@@ -164,8 +144,6 @@ const buildSegmentPatchURL = (functionID) => `${segmentFunctionsURL}/${functionI
  */
 const handleResponse = async (response) => {
   const status = response.status;
-
-  core.info(`status: ${status}`);
 
   if (status !== 200) {
     const body = await response.json();
@@ -221,22 +199,11 @@ const updateSegmentFunction = async (token, functionPath, settingsPath) => {
  * configurations to update them later on Segment with the new code and/or configurations.
  */
 const updateSegmentFunctions = async () => {
-  core.info('updateSegmentFunctions');
-
   const token = authToken();
-
-  core.info(token);
-
   const functionsAndSettings = await listChangedFunctionsAndSettings();
-
-  core.info('functionsAndSettings');
-  core.info(functionsAndSettings);
-  core.info('functionsAndSettings');
 
   for (let i = 0; i < functionsAndSettings.length; i++) {
     const functionAndSetting = functionsAndSettings[i];
-
-    core.info(functionsAndSettings);
 
     await updateSegmentFunction(
       token,
