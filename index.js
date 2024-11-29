@@ -47,32 +47,30 @@ const listChangedFunctionsAndSettings = async () => {
   const onlyCodeFile = file => codeFile(file) && !testFile(file);
   const configOrCodeFile = file => configFile(file) || onlyCodeFile(file);
 
-  // const filesOfInterest = filePaths.filter(configOrCodeFile);
-  // const pathsOfInterest = [];
+  const filesOfInterest = [];
+  const pathsOfInterest = [];
 
   for (const changedFile of changedFiles) {
-    const { filename } = changedFile;
+    const filePath = changedFile.filename;
 
-    core.info(`checking file '${filename}'`);
+    core.info(`checking file '${filePath}'`);
 
-    if (configOrCodeFile(filename)){
-      pathsOfInterest.push(filename);
+    if (configOrCodeFile(filePath)){
+      filesOfInterest.push(filePath);
+
+      const partsOfPath = filePath.split('/');
+
+      partsOfPath.pop();
+
+      const fullPath = partsOfPath.join('/');
+
+      core.info(`adding path '${fullPath}'`);
+
+      pathsOfInterest.push(fullPath);
     }
   }
 
   core.info(filesOfInterest);
-
-  for (let i = 0; i < filesOfInterest.length; i++) {
-    const fullPathWithFile = filesOfInterest[i];
-    const partsOfPath = fullPathWithFile.split('/');
-
-    partsOfPath.pop();
-
-    const fullPath = partsOfPath.join('/');
-
-    pathsOfInterest.push(fullPath);
-  }
-
   core.info(pathsOfInterest);
 
   const pathsThatHaveChanges = new Set(pathsOfInterest);
