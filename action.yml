@@ -9,6 +9,10 @@ inputs:
     description: 'The authorization token used to access Segment public APIs of your account.'
     required: true
     default: ''
+  pr-number:
+    description: 'The authorization token used to access Segment public APIs of your account.'
+    required: true
+    default: ''
 outputs:
   time: # id of output
     description: 'The time we greeted you'
