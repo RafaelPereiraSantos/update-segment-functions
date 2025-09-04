@@ -6,6 +6,7 @@ const yaml = require('js-yaml');
 
 const segmentFunctionsURL = 'https://api.segmentapis.com/functions';
 const contentType = 'application/json';
+const trunkBranch = core.getInput('trunk-branch');
 
 /**
  * This function retrieve the authorization token that will be used to authenticate with Segment.
@@ -14,7 +15,7 @@ const contentType = 'application/json';
  */
 const authToken = () => {
     const token = core.getInput('authorization-token');
-    // if (!token) throw new Error('authorization token can not be blank');
+    if (!token) throw new Error('authorization token can not be blank');
 
     return token;
 };
@@ -34,7 +35,6 @@ function execPromise(command) {
 }
 
 const listOfChangedFiles = async () => {
-    const trunkBranch = core.getInput('trunk-branch');
     const diffCommand = 'git diff --name-only --diff-filter=AM origin/' + trunkBranch +'...HEAD';
     const { stdout } = await execPromise(diffCommand)
     const changedFiles = stdout.split('\n').filter(line => line.trim() !== '');
