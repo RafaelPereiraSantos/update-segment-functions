@@ -184,7 +184,7 @@ const updateSegmentFunction = async (token, code, settings) => {
         options,
     );
 
-    handleResponse(response);
+    await handleResponse(response);
 };
 
 /**
@@ -196,14 +196,13 @@ const updateSegmentFunctions = async () => {
     const segmentFunctionsConfigPath = core.getInput('segment-functions-config-path');
     const functionsAndSettings = await listChangedFunctionsAndSettings(segmentFunctionsConfigPath);
 
-    await functionsAndSettings.forEach(async functionAndSettings => {
-
+    await Promise.all(functionsAndSettings.map(async functionAndSettings => {
         await updateSegmentFunction(
             token,
             functionAndSettings.code,
             functionAndSettings.settings,
-        )
-    });
+        );
+    }));
 };
 
 try {
