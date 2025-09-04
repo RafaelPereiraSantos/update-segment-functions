@@ -24,6 +24,28 @@ const authToken = () => {
     return token;
 };
 
+function execPromise(command) {
+    return new Promise((resolve, reject) => {
+        exec(command, (error, stdout, stderr) => {
+        if (error) {
+            console.error(`exec error: ${error}`);
+
+            return reject(stderr);
+        }
+
+        resolve({ stdout, stderr });
+        });
+    });
+}
+
+const listOfChangedFiles = async () => {
+    const diffCommand = 'git diff --name-only --diff-filter=AM origin/' + trunkBranch +'...HEAD';
+    const { stdout } = await execPromise(diffCommand)
+    const changedFiles = stdout.split('\n').filter(line => line.trim() !== '');
+
+    return changedFiles
+}
+
 /**
  * This function validates a function setting.
  *
@@ -46,88 +68,6 @@ var validateFunctionSettings = (functionsSettings) => {
     };
 };
 
-function execPromise(command) {
-    return new Promise((resolve, reject) => {
-        exec(command, (error, stdout, stderr) => {
-        if (error) {
-            console.error(`exec error: ${error}`);
-            return reject(stderr);
-        }
-        resolve({ stdout, stderr });
-        });
-    });
-}
-
-/**
- * This functions is responsible for checking which files had changed between the current branch and the one that was
- * merged into the current branch and then listing the javascript and yaml files that had changed to be used later
- * as the payload to update the functions on Segment with the code and info of the function.
- *
- * @returns {[Object]} A list of objects containing the pair of javascript and yaml files that must be update into
- * Segment.
- */
-const listChangedFunctionsAndSettings = async (filePath) => {
-    core.info('reading configuration file: ' + filePath);
-
-    await execPromise('git fetch origin ' + trunkBranch);
-
-    var functionsAndSettingsToUpdate = [];
-
-    await fs.readFile(filePath, 'utf8', async (err, data) => {
-        core.info('configuration file read');
-
-        if (err) {
-            console.error('Error reading file:', err);
-
-            throw new Error('no configurations file defined');
-        }
-
-        const diffCommand = 'git diff --name-only --diff-filter=AM origin/' + trunkBranch +'...HEAD';
-        await execPromise(diffCommand).then(({ stdout }) => {
-            const changedFiles = stdout.split('\n').filter(line => line.trim() !== '');
-
-            var listOfFunctionsAndSettingsPath = {};
-
-            try {
-                listOfFunctionsAndSettingsPath = yaml.load(data);
-            } catch (yamlErr) {
-                throw new Error('error parsing configuration file:', yamlErr);
-            }
-
-            listOfFunctionsAndSettingsPath.functions.forEach(async functionAndSettingsPath => {
-                await fs.readFile(functionAndSettingsPath.settingsPath, 'utf8', async (err, data) => {
-                    if (err) {
-                        console.error('Error reading file:', err);
-
-                        throw new Error('error with setting files of function');
-                    }
-
-                    var functionAndSettings = {};
-                    try {
-                        functionAndSettings = yaml.load(data);
-                    } catch (yamlErr) {
-                        throw new Error('error parsing configuration file:', yamlErr);
-                    }
-
-                    validateFunctionSettings(functionAndSettings);
-
-                    const codeChanged = changedFiles.includes(functionAndSettings.codePath);
-                    const settingsChanged = changedFiles.includes(functionAndSettings.settingsPath);
-
-                    if (codeChanged || settingsChanged) {
-                        functionsAndSettingsToUpdate.push({
-                            codePath: functionAndSettingsPath.codePath,
-                            settings: data,
-                        });
-                    }
-                });
-            });
-        });
-    });
-
-    return functionsAndSettingsToUpdate;
-};
-
 /**
  * This function extracts the source code from a function to be sent to Segment.
  *
@@ -135,6 +75,57 @@ const listChangedFunctionsAndSettings = async (filePath) => {
  * @returns {String} The source code of the function present at the given path.
  */
 const extractCode = (codePath) => fs.readFileSync(codePath, 'utf8');
+
+/**
+ * This functions is responsible for checking which files had changed between the current branch and the one that was
+ * merged into the current branch and then listing the javascript and yaml files that had changed to be used later
+ * as the payload to update the functions on Segment with the code and info of the function.
+ *
+ * @returns {Promise[Object]} A list of objects containing the pair of javascript and yaml files that must be update into
+ * Segment.
+ */
+const listChangedFunctionsAndSettings = async (filePath) => {
+    core.info('reading configuration file: ' + filePath);
+
+    await execPromise('git fetch origin ' + trunkBranch)
+
+    const functionsAndSettingsToUpdate = [];
+    const data = fs.readFileSync(filePath, 'utf8');
+    var listOfFunctionsAndSettingsPath = {};
+
+    try {
+        listOfFunctionsAndSettingsPath = yaml.load(data);
+    } catch (yamlErr) {
+        throw new Error('error parsing configuration file:', yamlErr);
+    }
+
+    await Promise.all(listOfFunctionsAndSettingsPath.functions.map(async functionAndSettingsPath => {
+        const changedFiles = await listOfChangedFiles();
+        const codeChanged = changedFiles.includes(functionAndSettingsPath.codePath);
+        const settingsChanged = changedFiles.includes(functionAndSettingsPath.settingsPath);
+
+        if (codeChanged || settingsChanged) {
+            const settingsData = await fs.readFileSync(functionAndSettingsPath.settingsPath, 'utf8');
+            var settings = {};
+            try {
+                settings = yaml.load(settingsData);
+            } catch (yamlErr) {
+                throw new Error('error parsing configuration file:', yamlErr);
+            }
+
+            validateFunctionSettings(settings);
+
+            const code = extractCode(functionAndSettingsPath.codePath);
+
+            functionsAndSettingsToUpdate.push({
+                code: code,
+                settings: settings,
+            });
+        }
+    }));
+
+    return functionsAndSettingsToUpdate;
+};
 
 /**
  * This function is responsible for generating the URL that will be used to update a function on Segment.
@@ -169,15 +160,12 @@ const handleResponse = async (response) => {
  * This function updates a function on Segment with the new code and configurations.
  *
  * @param {String} token The authentication token that will be used to authenticate with Segment.
- * @param {String} codePath The path of the function that will be updated.
- * @param {String} settingsPath  The path of the yaml file that contains the configurations of the function.
+ * @param {String} code The path of the function that will be updated.
+ * @param {object} settings  All settings associated with tthe function to be updated.
  * @returns {Promise<void>} A promise that resolves when the function was successfully updated on Segment.
  */
-const updateSegmentFunction = async (token, codePath, settingsPath) => {
+const updateSegmentFunction = async (token, code, settings) => {
     core.info('updating segment functions');
-
-    const code = extractCode(codePath);
-    const settings = prepareSettings(settingsPath);
 
     const method = 'PATCH';
     const headers = {
@@ -210,14 +198,16 @@ const updateSegmentFunction = async (token, codePath, settingsPath) => {
 const updateSegmentFunctions = async () => {
     const token = authToken();
     const segmentFunctionsConfigPath = core.getInput('segment-functions-config-path');
-    const functionsAndSettings = await listChangedFunctionsAndSettings(segmentFunctionsConfigPath || defaultConfigFilePath)
+    const functionsAndSettings = await listChangedFunctionsAndSettings(segmentFunctionsConfigPath || defaultConfigFilePath);
 
-    await functionsAndSettings.forEach(async functionAndSettings => await updateSegmentFunction(
+    await functionsAndSettings.forEach(async functionAndSettings => {
+
+        await updateSegmentFunction(
             token,
-            functionAndSettings.codePath,
-            functionAndSettings.settingsPath,
+            functionAndSettings.code,
+            functionAndSettings.settings,
         )
-    );
+    });
 };
 
 try {
