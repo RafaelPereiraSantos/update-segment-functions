@@ -9,6 +9,10 @@ inputs:
     description: 'The path to the configuration file for Segment functions.'
     required: false
     default: 'segment-functions-config.yaml'
+  trunk-branch:
+    description: 'The main branch used as the trunk in the repository.'
+    required: false
+    default: 'main'
 runs:
   using: 'node20'
   main: 'index.js'

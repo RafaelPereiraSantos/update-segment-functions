@@ -7,11 +7,6 @@ const yaml = require('js-yaml');
 const segmentFunctionsURL = 'https://api.segmentapis.com/functions';
 const contentType = 'application/json';
 
-const defaultConfigFilePath = 'segment-functions-config-sample.yaml'
-const defaultTrunkBranch = 'main';
-
-var trunkBranch = core.getInput('trunk-branch') || defaultTrunkBranch;
-
 /**
  * This function retrieve the authorization token that will be used to authenticate with Segment.
  *
@@ -39,6 +34,7 @@ function execPromise(command) {
 }
 
 const listOfChangedFiles = async () => {
+    const trunkBranch = core.getInput('trunk-branch');
     const diffCommand = 'git diff --name-only --diff-filter=AM origin/' + trunkBranch +'...HEAD';
     const { stdout } = await execPromise(diffCommand)
     const changedFiles = stdout.split('\n').filter(line => line.trim() !== '');
@@ -198,7 +194,7 @@ const updateSegmentFunction = async (token, code, settings) => {
 const updateSegmentFunctions = async () => {
     const token = authToken();
     const segmentFunctionsConfigPath = core.getInput('segment-functions-config-path');
-    const functionsAndSettings = await listChangedFunctionsAndSettings(segmentFunctionsConfigPath || defaultConfigFilePath);
+    const functionsAndSettings = await listChangedFunctionsAndSettings(segmentFunctionsConfigPath);
 
     await functionsAndSettings.forEach(async functionAndSettings => {
 
