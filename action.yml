@@ -5,9 +5,10 @@ inputs:
     description: 'The authorization token used to access Segment public APIs of your account.'
     required: true
     default: ''
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
+  segment-functions-config-path:
+    description: 'The path to the configuration file for Segment functions.'
+    required: false
+    default: 'segment-functions-config.yaml'
 runs:
   using: 'node20'
   main: 'index.js'

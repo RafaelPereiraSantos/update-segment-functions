@@ -1,0 +1,4 @@
+functions:
+  - functionName: example function name
+    codePath: example_function/function_example.js
+    settingsPath: example_function/function-settings-example.yaml
