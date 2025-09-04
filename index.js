@@ -67,7 +67,7 @@ function execPromise(command) {
 const listChangedFunctionsAndSettings = async (filePath) => {
     core.info('reading configuration file: ', filePath);
 
-    await execPromise('git fetch origin master');
+    await execPromise('git fetch origin main');
 
     return fs.readFile(filePath, 'utf8', (err, data) => {
         if (err) {
