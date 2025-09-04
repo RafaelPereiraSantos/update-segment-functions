@@ -1,4 +1,4 @@
-functionID: sfnc_1xrMxmOAqi
+functionID: my-function-id
 settings:
   - name: 'functionApiKey'
     label: 'apiKey'

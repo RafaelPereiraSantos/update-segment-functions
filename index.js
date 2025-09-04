@@ -7,7 +7,10 @@ const yaml = require('js-yaml');
 const segmentFunctionsURL = 'https://api.segmentapis.com/functions';
 const contentType = 'application/json';
 
-const defaultConfigFilePath = './segment-functions-config.yaml'
+const defaultConfigFilePath = 'segment-functions-config-sample.yaml'
+const defaultTrunkBranch = 'main';
+
+var trunkBranch = core.getInput('trunk-branch') || defaultTrunkBranch;
 
 /**
  * This function retrieve the authorization token that will be used to authenticate with Segment.
@@ -16,7 +19,7 @@ const defaultConfigFilePath = './segment-functions-config.yaml'
  */
 const authToken = () => {
     const token = core.getInput('authorization-token');
-    if (!authToken) throw new Error('authorization token can not be blank');
+    // if (!token) throw new Error('authorization token can not be blank');
 
     return token;
 };
@@ -30,7 +33,6 @@ var validateFunctionSettings = (functionsSettings) => {
     if (!functionsSettings.functionID) throw new Error('missing functionID');
     if (!functionsSettings.displayName) throw new Error('missing displayName');
     if (!functionsSettings.description) throw new Error('missing description');
-    if (!functionsSettings.path) throw new Error('missing path');
 
     if (functionsSettings.settings) {
         functionsSettings.settings.forEach(setting => {
@@ -65,19 +67,23 @@ function execPromise(command) {
  * Segment.
  */
 const listChangedFunctionsAndSettings = async (filePath) => {
-    core.info('reading configuration file: ', filePath);
+    core.info('reading configuration file: ' + filePath);
 
-    await execPromise('git fetch origin main');
+    await execPromise('git fetch origin ' + trunkBranch);
 
-    return fs.readFile(filePath, 'utf8', (err, data) => {
+    var functionsAndSettingsToUpdate = [];
+
+    await fs.readFile(filePath, 'utf8', async (err, data) => {
+        core.info('configuration file read');
+
         if (err) {
             console.error('Error reading file:', err);
 
             throw new Error('no configurations file defined');
         }
 
-        const diffCommand = 'git diff --name-only --diff-filter=AM origin/master...HEAD';
-        return execPromise(diffCommand).then(({ stdout }) => {
+        const diffCommand = 'git diff --name-only --diff-filter=AM origin/' + trunkBranch +'...HEAD';
+        await execPromise(diffCommand).then(({ stdout }) => {
             const changedFiles = stdout.split('\n').filter(line => line.trim() !== '');
 
             var listOfFunctionsAndSettingsPath = {};
@@ -88,25 +94,38 @@ const listChangedFunctionsAndSettings = async (filePath) => {
                 throw new Error('error parsing configuration file:', yamlErr);
             }
 
-            var functionsAndSettingsToUpdate = [];
+            listOfFunctionsAndSettingsPath.functions.forEach(async functionAndSettingsPath => {
+                await fs.readFile(functionAndSettingsPath.settingsPath, 'utf8', async (err, data) => {
+                    if (err) {
+                        console.error('Error reading file:', err);
 
-            listOfFunctionsAndSettingsPath.functions.forEach(functionAndSettingsPath => {
-                validateFunctionSettings(functionAndSettingsPath);
+                        throw new Error('error with setting files of function');
+                    }
 
-                const codeChanged = changedFiles.includes(functionAndSettingsPath.codePath);
-                const settingsChanged = changedFiles.includes(functionAndSettingsPath.settingsPath);
+                    var functionAndSettings = {};
+                    try {
+                        functionAndSettings = yaml.load(data);
+                    } catch (yamlErr) {
+                        throw new Error('error parsing configuration file:', yamlErr);
+                    }
 
-                if (codeChanged || settingsChanged) {
-                    functionsAndSettingsToUpdate.push({
-                        codePath: functionAndSettingsPath.codePath,
-                        settingPath: functionAndSettingsPath.settingsPath,
-                    });
-                }
+                    validateFunctionSettings(functionAndSettings);
+
+                    const codeChanged = changedFiles.includes(functionAndSettings.codePath);
+                    const settingsChanged = changedFiles.includes(functionAndSettings.settingsPath);
+
+                    if (codeChanged || settingsChanged) {
+                        functionsAndSettingsToUpdate.push({
+                            codePath: functionAndSettingsPath.codePath,
+                            settings: data,
+                        });
+                    }
+                });
             });
-
-            return functionsAndSettingsToUpdate;
         });
     });
+
+    return functionsAndSettingsToUpdate;
 };
 
 /**
@@ -155,6 +174,8 @@ const handleResponse = async (response) => {
  * @returns {Promise<void>} A promise that resolves when the function was successfully updated on Segment.
  */
 const updateSegmentFunction = async (token, codePath, settingsPath) => {
+    core.info('updating segment functions');
+
     const code = extractCode(codePath);
     const settings = prepareSettings(settingsPath);
 
@@ -189,16 +210,14 @@ const updateSegmentFunction = async (token, codePath, settingsPath) => {
 const updateSegmentFunctions = async () => {
     const token = authToken();
     const segmentFunctionsConfigPath = core.getInput('segment-functions-config-path');
-    return listChangedFunctionsAndSettings(segmentFunctionsConfigPath || defaultConfigFilePath)
-        .then(functionsAndSettings => {
+    const functionsAndSettings = await listChangedFunctionsAndSettings(segmentFunctionsConfigPath || defaultConfigFilePath)
 
-        return functionsAndSettings.forEach(functionAndSettings => updateSegmentFunction(
-                token,
-                functionAndSettings.codePath,
-                functionAndSettings.settingsPath,
-            )
-        );
-    });
+    await functionsAndSettings.forEach(async functionAndSettings => await updateSegmentFunction(
+            token,
+            functionAndSettings.codePath,
+            functionAndSettings.settingsPath,
+        )
+    );
 };
 
 try {
