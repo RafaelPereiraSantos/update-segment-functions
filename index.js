@@ -67,8 +67,6 @@ function execPromise(command) {
 const listChangedFunctionsAndSettings = async (filePath) => {
     core.info('reading configuration file: ', filePath);
 
-    const functionsAndSettingsToUpdate = [];
-
     await execPromise('git fetch origin master');
 
     return fs.readFile(filePath, 'utf8', (err, data) => {
@@ -80,33 +78,35 @@ const listChangedFunctionsAndSettings = async (filePath) => {
 
         const diffCommand = 'git diff --name-only --diff-filter=AM origin/master...HEAD';
         return execPromise(diffCommand).then(({ stdout }) => {
-        const changedFiles = stdout.split('\n').filter(line => line.trim() !== '');
+            const changedFiles = stdout.split('\n').filter(line => line.trim() !== '');
 
-        var listOfFunctionsAndSettingsPath = {};
+            var listOfFunctionsAndSettingsPath = {};
 
-        try {
-            listOfFunctionsAndSettingsPath = yaml.load(data);
-        } catch (yamlErr) {
-            throw new Error('error parsing configuration file:', yamlErr);
-        }
-
-        return listOfFunctionsAndSettingsPath.functions.forEach(functionAndSettingsPath => {
-            validateFunctionSettings(functionAndSettingsPath);
-
-            const codeChanged = changedFiles.includes(functionAndSettingsPath.codePath);
-            const settingsChanged = changedFiles.includes(functionAndSettingsPath.settingsPath);
-
-            if (codeChanged || settingsChanged) {
-                functionsAndSettingsToUpdate.push({
-                    codePath: functionAndSettingsPath.codePath,
-                    settingPath: functionAndSettingsPath.settingsPath,
-                });
+            try {
+                listOfFunctionsAndSettingsPath = yaml.load(data);
+            } catch (yamlErr) {
+                throw new Error('error parsing configuration file:', yamlErr);
             }
-        });
+
+            var functionsAndSettingsToUpdate = [];
+
+            listOfFunctionsAndSettingsPath.functions.forEach(functionAndSettingsPath => {
+                validateFunctionSettings(functionAndSettingsPath);
+
+                const codeChanged = changedFiles.includes(functionAndSettingsPath.codePath);
+                const settingsChanged = changedFiles.includes(functionAndSettingsPath.settingsPath);
+
+                if (codeChanged || settingsChanged) {
+                    functionsAndSettingsToUpdate.push({
+                        codePath: functionAndSettingsPath.codePath,
+                        settingPath: functionAndSettingsPath.settingsPath,
+                    });
+                }
+            });
+
+            return functionsAndSettingsToUpdate;
         });
     });
-
-  return functionsAndSettingsToUpdate;
 };
 
 /**
