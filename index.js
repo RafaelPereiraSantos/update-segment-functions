@@ -54,12 +54,12 @@ var validateFunctionSettings = (functionsSettings) => {
 
     if (functionsSettings.settings) {
         functionsSettings.settings.forEach(setting => {
-        if (!setting.name) throw new Error('settings present but missing name');
-        if (!setting.label) throw new Error('settings present but missing label');
-        if (!setting.description) throw new Error('settings present but missing description');
-        if (!setting.required) throw new Error('settings present but missing required');
-        if (!setting.sensitive) throw new Error('settings present but missing sensitive');
-        if (!setting.type) throw new Error('settings present but missing type');
+            if (!setting.name) throw new Error('settings present but missing name');
+            if (!setting.label) throw new Error('settings present but missing label');
+            if (!setting.description) throw new Error('settings present but missing description');
+            if (!setting.required) throw new Error('settings present but missing required');
+            if (!setting.sensitive) throw new Error('settings present but missing sensitive');
+            if (!setting.type) throw new Error('settings present but missing type');
         });
     };
 };
@@ -83,7 +83,7 @@ const extractCode = (codePath) => fs.readFileSync(codePath, 'utf8');
 const listChangedFunctionsAndSettings = async (filePath) => {
     core.info('reading configuration file: ' + filePath);
 
-    await execPromise('git fetch origin ' + trunkBranch)
+    // await execPromise('git fetch origin ' + trunkBranch)
 
     const functionsAndSettingsToUpdate = [];
     const data = fs.readFileSync(filePath, 'utf8');
