@@ -83,8 +83,6 @@ const extractCode = (codePath) => fs.readFileSync(codePath, 'utf8');
 const listChangedFunctionsAndSettings = async (filePath) => {
     core.info('reading configuration file: ' + filePath);
 
-    // await execPromise('git fetch origin ' + trunkBranch)
-
     const functionsAndSettingsToUpdate = [];
     const data = fs.readFileSync(filePath, 'utf8');
     var listOfFunctionsAndSettingsPath = {};
@@ -178,6 +176,9 @@ const updateSegmentFunction = async (token, code, settings) => {
         headers,
         body: JSON.stringify(payload),
     };
+
+    core.info('updating function: ' + settings.displayName);
+    core.info('updating function code: ' + code);
 
     const response = await fetch(
         buildSegmentPatchURL(settings.functionID),
