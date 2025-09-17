@@ -118,6 +118,8 @@ const listChangedFunctionsAndSettings = async (filePath) => {
         }
     }));
 
+    core.info('functions to update: ' + functionsAndSettingsToUpdate);
+
     return functionsAndSettingsToUpdate;
 };
 
