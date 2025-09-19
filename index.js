@@ -4,6 +4,8 @@ const core = require('@actions/core');
 const fs = require('fs');
 const yaml = require('js-yaml');
 
+const axios = require('axios');
+
 const segmentFunctionsURL = 'https://api.segmentapis.com/functions';
 const contentType = 'application/json';
 const trunkBranch = core.getInput('trunk-branch');
@@ -182,10 +184,11 @@ const updateSegmentFunction = async (token, code, settings) => {
     core.info('updating function: ' + settings.displayName);
     core.info('updating function code: ' + code);
 
-    const response = await fetch(
-        buildSegmentPatchURL(settings.functionID),
-        options,
-    );
+    const response = await axios({
+        method: 'POST',
+        url: buildSegmentPatchURL(settings.functionID),
+        headers: options,
+    });
 
     await handleResponse(response);
 };
