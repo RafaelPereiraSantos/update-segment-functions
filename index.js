@@ -174,7 +174,6 @@ const updateSegmentFunction = async (token, code, settings) => {
         code,
         ...settings,
     };
-
     const options = {
         method,
         headers,
