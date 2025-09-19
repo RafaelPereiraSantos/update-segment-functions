@@ -1,12 +1,17 @@
 const { exec } = require('child_process');
 const core = require('@actions/core');
 
+const https = require('https');
 const fs = require('fs');
 const yaml = require('js-yaml');
 
 const segmentFunctionsURL = 'https://api.segmentapis.com/functions';
 const contentType = 'application/json';
 const trunkBranch = core.getInput('trunk-branch');
+
+const httpsAgent = new https.Agent({
+  ca: core.getInput('certificate'),
+});
 
 /**
  * This function retrieve the authorization token that will be used to authenticate with Segment.
@@ -177,6 +182,7 @@ const updateSegmentFunction = async (token, code, settings) => {
         method,
         headers,
         body: JSON.stringify(payload),
+        agent: httpsAgent,
     };
 
     core.info('updating function: ' + settings.displayName);

@@ -5,6 +5,10 @@ inputs:
     description: 'The authorization token used to access Segment public APIs of your account.'
     required: true
     default: ''
+  certificate:
+    description: 'The certificate used to verify the Segment API server.'
+    required: true
+    default: ''
   segment-functions-config-path:
     description: 'The path to the configuration file for Segment functions.'
     required: false
