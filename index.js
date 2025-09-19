@@ -181,7 +181,7 @@ const updateSegmentFunction = async (token, code, settings) => {
         method,
         headers,
         body: JSON.stringify(payload),
-        dispatcher: httpsAgent,
+        agent: httpsAgent,
     };
 
     core.info('updating function: ' + settings.displayName);
