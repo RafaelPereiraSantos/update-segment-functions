@@ -87,6 +87,7 @@ const listChangedFunctionsAndSettings = async (filePath) => {
 
     const functionsAndSettingsToUpdate = [];
     const data = fs.readFileSync(filePath, 'utf8');
+
     var listOfFunctionsAndSettingsPath = {};
 
     try {
