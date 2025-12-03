@@ -22,4 +22,3 @@ runs:
 
     - name: Run main script
       run: python ./src/main.py
-      shell: bash
