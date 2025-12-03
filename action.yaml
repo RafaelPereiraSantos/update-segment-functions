@@ -13,8 +13,6 @@ inputs:
     default: 'main'
 
 runs:
-  name: Update Segment Functions
-  runs-on: ubuntu-latest
   using: 'composite'
   steps:
     - uses: actions/checkout@v4
