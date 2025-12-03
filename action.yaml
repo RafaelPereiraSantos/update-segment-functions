@@ -5,6 +5,8 @@ inputs:
   segment-token:
     description: 'Segment authentication token'
     required: true
+  configuration-file-path:
+    description: 'Path to the configuration file of your Segment functions'
 
 runs:
   using: 'composite'
