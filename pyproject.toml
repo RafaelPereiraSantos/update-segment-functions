@@ -1,11 +1,15 @@
 [project]
 name = "update-segment-functions"
 version = "0.1.0"
-description = ""
+description = "Automatically update Segment functions based on file changes"
 dependencies = [
     "pyyaml",
+    "requests",
 ]
 requires-python = ">=3.8"
+
+[project.scripts]
+update-segment-functions = "src.main:main"
 
 [build-system]
 requires = ["setuptools>=61.0"]

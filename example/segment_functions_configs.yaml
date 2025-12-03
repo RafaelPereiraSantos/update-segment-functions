@@ -1,0 +1,4 @@
+functions:
+  - name: sample function
+    code_path: example/sample_function/index.js
+    settings_path: example/sample_function/function_settings.yaml

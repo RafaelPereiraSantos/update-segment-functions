@@ -1,0 +1,23 @@
+
+name: 'update-segment-functions'
+description: 'Function responsible for updating functions inside Segment.'
+inputs:
+  segment-token:
+    description: 'Segment authentication token'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Python
+      uses: actions/setup-python@v5 # Sets up Python on the runner
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: pip install -e .
+      shell: bash
+
+    - name: Run main script
+      run: python ./src/main.py
+      shell: bash

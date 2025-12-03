@@ -1,0 +1,8 @@
+function_id: sample_function_id
+settings:
+  - name: sample variable
+    label: variable_label
+    description: This is a sample variable for demonstration.
+    type: string
+    required: false
+    sensitive: false
