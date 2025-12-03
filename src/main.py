@@ -52,3 +52,6 @@ def main():
             )
         except Exception as e:
                 print(f"Error processing function {function.get('name', 'unknown')}: {e}")
+
+if __name__ == "__main__":
+    main()
