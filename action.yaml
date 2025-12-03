@@ -13,8 +13,14 @@ inputs:
     default: 'main'
 
 runs:
+  name: Update Segment Functions
+  runs-on: ubuntu-latest
   using: 'composite'
   steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
     - name: Setup Python
       uses: actions/setup-python@v5 # Sets up Python on the runner
       with:
