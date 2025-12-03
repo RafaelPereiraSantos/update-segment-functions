@@ -17,9 +17,10 @@ runs:
         python-version: '3.11'
 
     - name: Install dependencies
-      run: pip install -e .
+      run: pip install -e ${{ github.action_path }}
       shell: bash
 
     - name: Run main script
-      run: python ./src/main.py
+      run: python -m src.main
       shell: bash
+      working-directory: ${{ github.action_path }}
