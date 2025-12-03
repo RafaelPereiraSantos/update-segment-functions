@@ -28,6 +28,13 @@ runs:
       run: pip install -e ${{ github.action_path }}
       shell: bash
 
+    - name: Debug - Print current directory
+      run: |
+        echo "Current directory: $(pwd)"
+        echo "Action path: ${{ github.action_path }}"
+        ls -la
+      shell: bash
+
     - name: Run main script
       run: python -m src.main
       shell: bash
