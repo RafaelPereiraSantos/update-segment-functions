@@ -2,11 +2,8 @@ import os
 import subprocess
 from typing import List
 
-default_trunk = 'master'
-
-def get_changed_files() -> List[str]:
+def get_changed_files(base_ref) -> List[str]:
     try:
-        base_ref = os.getenv('GITHUB_BASE_REF', default_trunk)
         head_ref = os.getenv('GITHUB_HEAD_REF', 'HEAD')
 
         # For pull requests in GitHub Actions
