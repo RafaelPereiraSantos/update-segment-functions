@@ -18,7 +18,6 @@ runs:
 
     - name: Install dependencies
       run: pip install -e .
-      shell: bash
 
     - name: Run main script
       run: python ./src/main.py
