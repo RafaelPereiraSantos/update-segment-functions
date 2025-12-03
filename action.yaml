@@ -7,6 +7,10 @@ inputs:
     required: true
   configuration-file-path:
     description: 'Path to the configuration file of your Segment functions'
+  trunk-branch:
+    description: 'The trunk branch to compare changes against'
+    required: false
+    default: 'main'
 
 runs:
   using: 'composite'
