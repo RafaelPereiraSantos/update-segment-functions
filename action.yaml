@@ -38,4 +38,3 @@ runs:
     - name: Run main script
       run: python -m src.main
       shell: bash
-      working-directory: ${{ github.action_path }}
