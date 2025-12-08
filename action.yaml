@@ -25,9 +25,16 @@ runs:
         python-version: '3.14'
 
     - name: Install dependencies
+      run: pip install -e ${{ github.action_path }}
+      shell: bash
+
+    - run: pip install requests certifi
+
+    - name: Set Certifi CA Bundle Path
       run: |
-        pip install -e ${{ github.action_path }}
-        export SSL_CERT_FILE=$(python -m certifi)
+        # Finds the path to the certifi bundle and sets it as an environment variable
+        CERT_PATH=$(python -c "import certifi; print(certifi.where())")
+        echo "REQUESTS_CA_BUNDLE=$CERT_PATH" >> $GITHUB_ENV
       shell: bash
 
     - name: Run main script
