@@ -21,6 +21,7 @@ trunk_branch = os.environ.get('INPUT_TRUNK-BRANCH') or ''
 repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
 
 def main():
+    print("starting main script...")
     all_changed_files = get_changed_files(base_branch=trunk_branch)
     configs = read_config_file(f"{repository_path}/{config_file_path}")
 
@@ -38,6 +39,9 @@ def main():
                 'code': read_raw_string_file(function_code_path),
                 'settings': read_config_file(function_settings_path)
             })
+
+    print("list of functions or settings to update:")
+    print(functions_or_settings_to_update)
 
     for function in functions_or_settings_to_update:
         validate_settings_payload(function['settings'])
