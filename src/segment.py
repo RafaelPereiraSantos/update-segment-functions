@@ -1,5 +1,4 @@
 import requests
-import certifi
 
 segment_url = 'https://api.segmentapis.com'
 functions_endpoint = '/functions'
@@ -11,7 +10,7 @@ def update_segment_function(function_id: str, token: str, code: str, settings: d
 
     data = {'code': code, 'settings': settings}
 
-    response = requests.patch(url, headers=default_headers(token), json=data, verify=certifi.where())
+    response = requests.patch(url, headers=default_headers(token), json=data)
     handle_segment_response(response)
 
 def handle_segment_response(response: requests.Response):
