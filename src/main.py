@@ -18,10 +18,11 @@ from src.segment import (
 config_file_path = os.environ.get('INPUT_CONFIGURATION-FILE-PATH') or 'config.yaml'
 segment_auth_token = os.environ.get('INPUT_SEGMENT-TOKEN') or ''
 trunk_branch = os.environ.get('INPUT_TRUNK-BRANCH') or ''
+repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
 
 def main():
     all_changed_files = get_changed_files(base_branch=trunk_branch)
-    configs = read_config_file(config_file_path)
+    configs = read_config_file(f"{repository_path}/{config_file_path}")
 
     functions_or_settings_to_update = []
 
