@@ -40,5 +40,5 @@ runs:
         echo "Current directory: $(pwd)"
         echo "Action path: ${{ github.action_path }}"
         ls -la
-        python -m src.main
+        python ${{ github.action_path }}/src/main.py
       shell: bash
