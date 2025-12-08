@@ -36,9 +36,5 @@ runs:
       shell: bash
 
     - name: Run main script
-      run: |
-        echo "Current directory: $(pwd)"
-        echo "Action path: ${{ github.action_path }}"
-        ls -la
-        python -m src.main
+      run: python -m src.main
       shell: bash
