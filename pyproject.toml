@@ -5,6 +5,7 @@ description = "Automatically update Segment functions based on file changes"
 dependencies = [
     "pyyaml",
     "requests",
+    "certifi",
 ]
 requires-python = ">=3.8"
 
