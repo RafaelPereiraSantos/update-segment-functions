@@ -29,8 +29,9 @@ def default_headers(token: str) -> dict:
 def validate_settings_payload(body: dict):
     if not body:
         raise ValueError(f"Missing settings")
-    for mandatory in mandatory_settings_keys:
-        if mandatory not in body:
-            raise ValueError(f"Missing mandatory setting key: {mandatory}")
-        if body[mandatory] is None:
-            raise ValueError(f"Setting key '{mandatory}' cannot be None")
+    for item in body:
+        for mandatory in mandatory_settings_keys:
+            if mandatory not in item:
+                raise ValueError(f"Missing mandatory setting key: {mandatory}")
+            if item[mandatory] is None:
+                raise ValueError(f"Setting key '{mandatory}' cannot be None")
