@@ -25,7 +25,9 @@ runs:
         python-version: '3.14'
 
     - name: Install dependencies
-      run: pip install -e ${{ github.action_path }}
+      run: |
+        pip install -e ${{ github.action_path }}
+        export SSL_CERT_FILE=$(python -m certifi)
       shell: bash
 
     - name: Run main script
