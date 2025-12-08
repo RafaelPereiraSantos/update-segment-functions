@@ -2,11 +2,12 @@ import os
 import subprocess
 from typing import List
 
-def get_changed_files(base_branch: str = 'main') -> List[str]:
+def get_changed_files(repository_path: str, base_branch: str = 'main') -> List[str]:
     is_ci = os.getenv('CI') == 'true'
 
     repo_name = subprocess.run(
         ["git", "rev-parse", "--show-toplevel"],
+        cwd=repository_path,
         check=True,
         capture_output=True,
         text=True
@@ -14,10 +15,11 @@ def get_changed_files(base_branch: str = 'main') -> List[str]:
     print(f"Repository: {repo_name}")
 
     if not is_ci:
-        subprocess.run(["git", "fetch", "origin", base_branch], check=True, capture_output=True)
+        subprocess.run(["git", "fetch", "origin", base_branch], cwd=repository_path, check=True, capture_output=True)
 
     result = subprocess.run(
         ["git", "diff", "--name-only", f"origin/{base_branch}...HEAD"],
+        cwd=repository_path,
         check=True,
         capture_output=True,
         text=True

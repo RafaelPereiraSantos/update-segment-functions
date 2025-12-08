@@ -22,7 +22,7 @@ repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
 
 def main():
     print("starting main script...")
-    all_changed_files = get_changed_files(base_branch=trunk_branch)
+    all_changed_files = get_changed_files(repository_path, base_branch=trunk_branch)
     print(all_changed_files)
     configs = read_config_file(f"{repository_path}/{config_file_path}")
 
