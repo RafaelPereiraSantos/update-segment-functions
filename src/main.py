@@ -42,7 +42,7 @@ def main():
                 'function_id': function.get('function_id'),
                 'name': function.get('name'),
                 'code': read_raw_string_file(f"{repository_path}/{function_code_path}"),
-                'settings': read_config_file(f"{repository_path}/{function_settings_path}")
+                'settings': read_config_file(f"{repository_path}/{function_settings_path}")['settings']
             })
 
     print("list of functions or settings to update:")
