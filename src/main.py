@@ -23,14 +23,19 @@ repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
 def main():
     print("starting main script...")
     all_changed_files = get_changed_files(base_branch=trunk_branch)
+    print(all_changed_files)
     configs = read_config_file(f"{repository_path}/{config_file_path}")
 
     functions_or_settings_to_update = []
-
+    print(configs)
     for function in configs.get('functions', []):
+        print(function)
         validate_function_settings(function)
         function_code_path = function.get('code_path', '')
         function_settings_path = function.get('settings_path', '')
+
+        print(function_code_path)
+        print(function_settings_path)
 
         if function_code_path in all_changed_files or function_settings_path in all_changed_files:
             functions_or_settings_to_update.append({
