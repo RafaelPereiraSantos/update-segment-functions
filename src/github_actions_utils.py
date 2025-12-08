@@ -5,6 +5,14 @@ from typing import List
 def get_changed_files(base_branch: str = 'main') -> List[str]:
     is_ci = os.getenv('CI') == 'true'
 
+    repo_name = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        check=True,
+        capture_output=True,
+        text=True
+    ).stdout.strip().split('/')[-1]
+    print(f"Repository: {repo_name}")
+
     if not is_ci:
         subprocess.run(["git", "fetch", "origin", base_branch], check=True, capture_output=True)
 
