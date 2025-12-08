@@ -11,7 +11,13 @@ def update_segment_function(function_id: str, token: str, code: str, settings: d
     data = {'code': code, 'settings': settings}
 
     response = requests.patch(url, headers=default_headers(token), json=data)
-    return response
+    handle_segment_response(response)
+
+def handle_segment_response(response: requests.Response):
+    if response.status_code >= 200 and response.status_code < 300:
+        print(f"Function updated successfully: {response.json()}")
+    else:
+        raise Exception(f"Error updating function: {response.status_code} - {response.text}")
 
 
 def default_headers(token: str) -> dict:
