@@ -41,8 +41,8 @@ def main():
             functions_or_settings_to_update.append({
                 'function_id': function.get('function_id'),
                 'name': function.get('name'),
-                'code': read_raw_string_file(function_code_path),
-                'settings': read_config_file(function_settings_path)
+                'code': read_raw_string_file(f"{repository_path}/{function_code_path}"),
+                'settings': read_config_file(f"{repository_path}/{function_settings_path}")
             })
 
     print("list of functions or settings to update:")
