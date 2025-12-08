@@ -24,16 +24,35 @@ runs:
       with:
         python-version: '3.14'
 
+    - name: Install system CA certificates
+      run: |
+        if [ -f /etc/os-release ]; then
+          . /etc/os-release
+          if [ "$ID" = "ubuntu" ] || [ "$ID" = "debian" ]; then
+            sudo apt-get update
+            sudo apt-get install -y ca-certificates
+            sudo update-ca-certificates
+          fi
+        fi
+      shell: bash
+
     - name: Install dependencies
-      run: pip install -e ${{ github.action_path }}
+      run: |
+        pip install --upgrade pip setuptools wheel
+        pip install -e ${{ github.action_path }}
       shell: bash
 
     - name: Set SSL Certificate Environment Variables
       run: |
+        python -m pip install --upgrade certifi
         CERT_PATH=$(python -c "import certifi; print(certifi.where())")
         echo "REQUESTS_CA_BUNDLE=$CERT_PATH" >> $GITHUB_ENV
         echo "SSL_CERT_FILE=$CERT_PATH" >> $GITHUB_ENV
         echo "CERT_PATH=$CERT_PATH" >> $GITHUB_ENV
+        echo "Certificate path: $CERT_PATH"
+        ls -la "$CERT_PATH" || echo "Certificate file not found!"
+        # Test SSL connection
+        python -c "import requests; requests.get('https://api.segmentapis.com', timeout=5)" && echo "SSL test passed" || echo "SSL test failed"
       shell: bash
 
     - name: Run main script
