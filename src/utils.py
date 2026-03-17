@@ -1,6 +1,6 @@
 import yaml
 
-mandatory_function_keys = ['function_id', 'name', 'code_path', 'settings_path']
+mandatory_function_keys = ['name', 'code_path', 'settings_path']
 
 def read_config_file(config_path: str) -> dict:
     try:

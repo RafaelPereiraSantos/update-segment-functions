@@ -15,38 +15,48 @@ from src.segment import (
     validate_settings_payload
 )
 
-config_file_path = os.environ.get('INPUT_CONFIGURATION-FILE-PATH') or 'config.yaml'
-segment_auth_token = os.environ.get('INPUT_SEGMENT-TOKEN') or ''
-trunk_branch = os.environ.get('INPUT_TRUNK-BRANCH') or ''
-repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
-
 def main():
-    print("starting main script...")
-    all_changed_files = get_changed_files(repository_path, base_branch=trunk_branch)
-    print(all_changed_files)
-    configs = read_config_file(f"{repository_path}/{config_file_path}")
+    config_file_path = os.environ.get('INPUT_CONFIGURATION-FILE-PATH') or 'config.yaml'
+    segment_auth_token = os.environ.get('INPUT_SEGMENT-TOKEN') or ''
+    trunk_branch = os.environ.get('INPUT_TRUNK-BRANCH') or ''
+    repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
 
+    print("starting main script...")
+
+    all_changed_files = get_changed_files(repository_path, base_branch=trunk_branch)
+    configs = read_config_file(f"{repository_path}/{config_file_path}")
     functions_or_settings_to_update = []
-    print(configs)
+
     for function in configs.get('functions', []):
-        print(function)
-        validate_function_settings(function)
+        try:
+            validate_function_settings(function)
+        except ValueError as e:
+            print(f"Skipping function due to validation error: {e}")
+            continue
+
         function_code_path = function.get('code_path', '')
         function_settings_path = function.get('settings_path', '')
 
-        print(function_code_path)
-        print(function_settings_path)
-
         if function_code_path in all_changed_files or function_settings_path in all_changed_files:
+            print(f"Changes detected in function: {function.get('name')}")
+
+            full_settings_path = os.path.join(repository_path, function_settings_path)
+            settings_data = read_config_file(full_settings_path)
+
+            if not settings_data or 'function_id' not in settings_data:
+                print(f"Error: Missing 'function_id' in settings file: {full_settings_path}")
+                continue
+
             functions_or_settings_to_update.append({
-                'function_id': function.get('function_id'),
+                'function_id': settings_data['function_id'],
                 'name': function.get('name'),
-                'code': read_raw_string_file(f"{repository_path}/{function_code_path}"),
-                'settings': read_config_file(f"{repository_path}/{function_settings_path}")['settings']
+                'code': read_raw_string_file(os.path.join(repository_path, function_code_path)),
+                'settings': settings_data.get('settings', [])
             })
 
     print("list of functions or settings to update:")
-    print(functions_or_settings_to_update)
+    for function in functions_or_settings_to_update:
+        print(f"Function ID: {function['function_id']}, Name: {function['name']}")
 
     for function in functions_or_settings_to_update:
         validate_settings_payload(function['settings'])
