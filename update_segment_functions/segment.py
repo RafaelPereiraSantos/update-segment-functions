@@ -54,9 +54,9 @@ def default_headers(token: str) -> dict:
         'Content-Type': 'application/json'
     }
 
-def validate_settings_payload(body: dict):
-    if not body:
-        raise ValueError(f"Missing settings")
+def validate_settings_payload(body: list):
+    if body is None:
+        raise ValueError("Settings payload cannot be None")
     for item in body:
         for mandatory in mandatory_settings_keys:
             if mandatory not in item:

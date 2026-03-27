@@ -66,10 +66,11 @@ def main():
             except Exception as e:
                 raise SystemExit(f"Error reading function files for {function.get('name')}: {e}")
 
-    print("list of functions or settings to update:")
+    print("list of functions to update:")
     for function in functions_or_settings_to_update:
-        print(f"Function ID: {function['function_id']}, Name: {function['name']}")
+        print(f"  - {function['name']} (id: {function['function_id']})")
 
+    failed = []
     for function in functions_or_settings_to_update:
         try:
             validate_settings_payload(function['settings'])
@@ -81,7 +82,11 @@ def main():
             )
             print(f"Successfully updated function: {function['name']}")
         except Exception as e:
-            raise SystemExit(f"Error updating function {function['function_id']} ({function['name']}): {e}")
+            print(f"Error updating function {function['name']} ({function['function_id']}): {e}")
+            failed.append(function['name'])
+
+    if failed:
+        raise SystemExit(f"The following functions failed to update: {', '.join(failed)}")
 
 if __name__ == "__main__":
     main()
