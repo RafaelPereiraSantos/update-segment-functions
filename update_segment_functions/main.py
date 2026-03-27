@@ -28,8 +28,12 @@ def main():
 
     print("starting main script...")
 
-    all_changed_files = get_changed_files(repository_path, base_branch=trunk_branch)
-    configs = read_config_file(f"{repository_path}/{config_file_path}")
+    try:
+        all_changed_files = get_changed_files(repository_path, base_branch=trunk_branch)
+        configs = read_config_file(f"{repository_path}/{config_file_path}")
+    except Exception as e:
+        raise SystemExit(f"Error reading configuration: {e}")
+
     functions_or_settings_to_update = []
 
     for function in configs.get('functions', []):
@@ -45,32 +49,39 @@ def main():
         if function_code_path in all_changed_files or function_settings_path in all_changed_files:
             print(f"Changes detected in function: {function.get('name')}")
 
-            full_settings_path = os.path.join(repository_path, function_settings_path)
-            settings_data = read_config_file(full_settings_path)
+            try:
+                full_settings_path = os.path.join(repository_path, function_settings_path)
+                settings_data = read_config_file(full_settings_path)
 
-            if not settings_data or 'function_id' not in settings_data:
-                print(f"Error: Missing 'function_id' in settings file: {full_settings_path}")
-                continue
+                if not settings_data or 'function_id' not in settings_data:
+                    print(f"Error: Missing 'function_id' in settings file: {full_settings_path}")
+                    continue
 
-            functions_or_settings_to_update.append({
-                'function_id': settings_data['function_id'],
-                'name': function.get('name'),
-                'code': read_raw_string_file(os.path.join(repository_path, function_code_path)),
-                'settings': settings_data.get('settings', [])
-            })
+                functions_or_settings_to_update.append({
+                    'function_id': settings_data['function_id'],
+                    'name': function.get('name'),
+                    'code': read_raw_string_file(os.path.join(repository_path, function_code_path)),
+                    'settings': settings_data.get('settings', [])
+                })
+            except Exception as e:
+                raise SystemExit(f"Error reading function files for {function.get('name')}: {e}")
 
     print("list of functions or settings to update:")
     for function in functions_or_settings_to_update:
         print(f"Function ID: {function['function_id']}, Name: {function['name']}")
 
     for function in functions_or_settings_to_update:
-        validate_settings_payload(function['settings'])
-        update_segment_function(
-            function['function_id'],
-            segment_auth_token,
-            function['code'],
-            function['settings']
-        )
+        try:
+            validate_settings_payload(function['settings'])
+            update_segment_function(
+                function['function_id'],
+                segment_auth_token,
+                function['code'],
+                function['settings']
+            )
+            print(f"Successfully updated function: {function['name']}")
+        except Exception as e:
+            raise SystemExit(f"Error updating function {function['function_id']} ({function['name']}): {e}")
 
 if __name__ == "__main__":
     main()
