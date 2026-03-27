@@ -1,9 +1,12 @@
 
 name: 'update-segment-functions'
-description: 'Function responsible for updating functions inside Segment.'
+description: 'Updates all Segment functions defined in the config file.'
 inputs:
   authorization-token:
     description: 'Segment authentication token'
+    required: true
+  github-token:
+    description: 'GitHub token used to checkout the PR branch'
     required: true
   configuration-file-path:
     description: 'Path to the configuration file of your Segment functions'
@@ -13,10 +16,30 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - uses: actions/checkout@v4
+    - name: Resolve PR head SHA
+      run: |
+        PR_NUMBER=${{ github.event.issue.number }}
+        PR_JSON=$(curl -s \
+          -H "Authorization: Bearer ${{ inputs.github-token }}" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}")
+
+        PR_HEAD_SHA=$(echo "$PR_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['head']['sha'])")
+
+        if [ -z "$PR_HEAD_SHA" ] || [ "$PR_HEAD_SHA" = "None" ]; then
+          echo "Error: could not resolve PR head SHA for PR #${PR_NUMBER}."
+          exit 1
+        fi
+
+        echo "PR head SHA: ${PR_HEAD_SHA}"
+        echo "PR_HEAD_SHA=${PR_HEAD_SHA}" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Checkout PR head
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0
-        ref: ${{ github.head_ref }}
+        ref: ${{ env.PR_HEAD_SHA }}
+        token: ${{ inputs.github-token }}
 
     - name: Setup Python
       uses: actions/setup-python@v5
@@ -54,7 +77,6 @@ runs:
         echo "SSL_CERT_FILE=$CERT_PATH" >> $GITHUB_ENV
         echo "CURL_CA_BUNDLE=$CERT_PATH" >> $GITHUB_ENV
         echo "Certificate path resolved: $CERT_PATH"
-        ls -la "$CERT_PATH"
       shell: bash
 
     - name: Verify SSL certificate configuration
@@ -64,10 +86,6 @@ runs:
         import requests
 
         cert_path = os.environ.get('REQUESTS_CA_BUNDLE') or os.environ.get('SSL_CERT_FILE')
-        print(f"REQUESTS_CA_BUNDLE={os.environ.get('REQUESTS_CA_BUNDLE', '')}")
-        print(f"SSL_CERT_FILE={os.environ.get('SSL_CERT_FILE', '')}")
-        print(f"Resolved certificate path: {cert_path}")
-
         if not cert_path or not os.path.isfile(cert_path):
             raise SystemExit(f"Certificate file is not accessible: {cert_path}")
 
@@ -82,4 +100,3 @@ runs:
       env:
         SEGMENT_TOKEN: ${{ inputs.authorization-token }}
         CONFIGURATION_FILE_PATH: ${{ inputs.configuration-file-path }}
-        TRUNK_BRANCH: ${{ github.base_ref }}

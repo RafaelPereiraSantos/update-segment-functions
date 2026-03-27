@@ -1,69 +1,114 @@
-from unittest.mock import patch
+import pytest
+from unittest.mock import patch, call
 from update_segment_functions.main import main
 
-@patch('update_segment_functions.main.get_changed_files')
-@patch('update_segment_functions.main.read_config_file')
-@patch('update_segment_functions.main.read_raw_string_file')
+
+def _base_env(overrides=None):
+    env = {
+        'SEGMENT_TOKEN': 'fake-token',
+        'GITHUB_WORKSPACE': '/fake/repo',
+        'CONFIGURATION_FILE_PATH': 'config.yaml',
+    }
+    if overrides:
+        env.update(overrides)
+    def get(key, default=''):
+        return env.get(key, default)
+    return get
+
+
 @patch('update_segment_functions.main.update_segment_function')
 @patch('update_segment_functions.main.validate_settings_payload')
+@patch('update_segment_functions.main.read_raw_string_file')
+@patch('update_segment_functions.main.read_config_file')
 @patch('os.environ.get')
-def test_main_updates_changed_function(mock_env, mock_validate_payload, mock_update, mock_read_raw, mock_read_config, mock_changed_files):
-    def env_get(key, default=''):
-        env = {
-            'INPUT_CONFIGURATION_FILE_PATH': 'config.yaml',
-            'INPUT_SEGMENT_TOKEN': 'fake-token',
-            'INPUT_TRUNK_BRANCH': 'main',
-            'GITHUB_WORKSPACE': '/fake/repo'
-        }
-        return env.get(key, default)
-    mock_env.side_effect = env_get
-
-    mock_changed_files.return_value = ['src/index.js']
+def test_main_updates_all_functions(mock_env, mock_read_config, mock_read_raw, mock_validate, mock_update):
+    mock_env.side_effect = _base_env()
 
     mock_read_config.side_effect = [
         {'functions': [
-            {
-                'name': 'test-function',
-                'code_path': 'src/index.js',
-                'settings_path': 'src/settings.yaml'
-            }
+            {'name': 'function-a', 'code_path': 'src/a.js', 'settings_path': 'src/a_settings.yaml'},
+            {'name': 'function-b', 'code_path': 'src/b.js', 'settings_path': 'src/b_settings.yaml'},
         ]},
-        {
-            'function_id': 'id-123',
-            'settings': [{'name': 'var1', 'label': 'Var 1', 'description': 'desc', 'type': 'string', 'required': False, 'sensitive': False}]
-        }
+        {'function_id': 'id-aaa', 'settings': [
+            {'name': 'var1', 'label': 'Var 1', 'description': 'desc', 'type': 'string', 'required': False, 'sensitive': False}
+        ]},
+        {'function_id': 'id-bbb', 'settings': []},
+    ]
+    mock_read_raw.side_effect = ["code-a", "code-b"]
+
+    main()
+
+    assert mock_update.call_count == 2
+    mock_update.assert_any_call('id-aaa', 'fake-token', 'code-a', [
+        {'name': 'var1', 'label': 'Var 1', 'description': 'desc', 'type': 'string', 'required': False, 'sensitive': False}
+    ])
+    mock_update.assert_any_call('id-bbb', 'fake-token', 'code-b', [])
+
+
+@patch('update_segment_functions.main.update_segment_function')
+@patch('update_segment_functions.main.read_raw_string_file')
+@patch('update_segment_functions.main.read_config_file')
+@patch('os.environ.get')
+def test_main_continues_after_one_failure(mock_env, mock_read_config, mock_read_raw, mock_update):
+    mock_env.side_effect = _base_env()
+
+    mock_read_config.side_effect = [
+        {'functions': [
+            {'name': 'function-a', 'code_path': 'src/a.js', 'settings_path': 'src/a_settings.yaml'},
+            {'name': 'function-b', 'code_path': 'src/b.js', 'settings_path': 'src/b_settings.yaml'},
+        ]},
+        {'function_id': 'id-aaa', 'settings': []},
+        {'function_id': 'id-bbb', 'settings': []},
+    ]
+    mock_read_raw.side_effect = ["code-a", "code-b"]
+    mock_update.side_effect = [Exception("API error"), None]
+
+    with pytest.raises(SystemExit) as exc:
+        main()
+
+    assert 'function-a' in str(exc.value)
+    assert mock_update.call_count == 2
+
+
+@patch('update_segment_functions.main.read_config_file')
+@patch('os.environ.get')
+def test_main_skips_function_missing_function_id(mock_env, mock_read_config):
+    mock_env.side_effect = _base_env()
+
+    mock_read_config.side_effect = [
+        {'functions': [
+            {'name': 'function-a', 'code_path': 'src/a.js', 'settings_path': 'src/a_settings.yaml'},
+        ]},
+        {'settings': []},  # missing function_id
     ]
 
-    mock_read_raw.return_value = "console.log('hello');"
+    with pytest.raises(SystemExit) as exc:
+        main()
 
-    main()
+    assert 'function-a' in str(exc.value)
 
-    mock_update.assert_called_once_with(
-        'id-123',
-        'fake-token',
-        "console.log('hello');",
-        [{'name': 'var1', 'label': 'Var 1', 'description': 'desc', 'type': 'string', 'required': False, 'sensitive': False}]
-    )
 
-@patch('update_segment_functions.main.get_changed_files')
-@patch('update_segment_functions.main.read_config_file')
-@patch('update_segment_functions.main.update_segment_function')
 @patch('os.environ.get')
-def test_main_no_changes(mock_env, mock_update, mock_read_config, mock_changed_files):
-    mock_env.return_value = '/fake/repo'
+def test_main_missing_segment_token_exits(mock_env):
+    mock_env.side_effect = _base_env({'SEGMENT_TOKEN': ''})
 
-    mock_changed_files.return_value = ['other_file.txt']
+    with pytest.raises(SystemExit, match='SEGMENT_TOKEN'):
+        main()
 
-    mock_read_config.return_value = {
-        'functions': [
-            {
-                'name': 'test-function',
-                'code_path': 'src/index.js',
-                'settings_path': 'src/settings.yaml'
-            }
-        ]
-    }
 
-    main()
+@patch('os.environ.get')
+def test_main_missing_github_workspace_exits(mock_env):
+    mock_env.side_effect = _base_env({'GITHUB_WORKSPACE': ''})
 
-    mock_update.assert_not_called()
+    with pytest.raises(SystemExit, match='GITHUB_WORKSPACE'):
+        main()
+
+
+@patch('update_segment_functions.main.read_config_file')
+@patch('os.environ.get')
+def test_main_empty_config_exits(mock_env, mock_read_config):
+    mock_env.side_effect = _base_env()
+    mock_read_config.return_value = {}
+
+    with pytest.raises(SystemExit, match='no functions found'):
+        main()

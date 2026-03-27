@@ -20,13 +20,6 @@ def read_raw_string_file(file_path: str) -> str:
         print(f"Error reading file {file_path}: {e}")
         return ""
 
-def filter_non_js_files(file_list: list) -> list:
-    filtered_files = []
-    for f in file_list:
-        if f.endswith('.js'):
-            filtered_files.append(f)
-    return filtered_files
-
 def validate_function_settings(settings: dict):
     for key in mandatory_function_keys:
         if key not in settings:
