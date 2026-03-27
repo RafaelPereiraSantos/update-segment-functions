@@ -27,12 +27,19 @@ def main():
         raise SystemExit("Error: GITHUB_WORKSPACE is not set")
 
     print("starting main script...")
+    print(f"Repository path: {repository_path}")
+    print(f"Config file: {config_file_path}")
+    print(f"Trunk branch: {trunk_branch}")
 
     try:
         all_changed_files = get_changed_files(repository_path, base_branch=trunk_branch)
         configs = read_config_file(f"{repository_path}/{config_file_path}")
     except Exception as e:
         raise SystemExit(f"Error reading configuration: {e}")
+
+    print(f"Changed files detected by git diff ({len(all_changed_files)}):")
+    for f in all_changed_files:
+        print(f"  - {f}")
 
     functions_or_settings_to_update = []
 
@@ -45,6 +52,8 @@ def main():
 
         function_code_path = function.get('code_path', '')
         function_settings_path = function.get('settings_path', '')
+
+        print(f"Checking function '{function.get('name')}': code_path='{function_code_path}' settings_path='{function_settings_path}'")
 
         if function_code_path in all_changed_files or function_settings_path in all_changed_files:
             print(f"Changes detected in function: {function.get('name')}")
