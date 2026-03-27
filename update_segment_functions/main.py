@@ -22,7 +22,7 @@ def main():
     repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
 
     if not segment_auth_token:
-        raise SystemExit("Error: INPUT_SEGMENT_TOKEN is not set")
+        raise SystemExit("Error: SEGMENT_TOKEN is not set")
     if not repository_path:
         raise SystemExit("Error: GITHUB_WORKSPACE is not set")
 
