@@ -1,6 +1,6 @@
 
 name: 'update-segment-functions'
-description: 'Updates all Segment functions defined in the config file.'
+description: 'Updates a Segment function by name, triggered via a PR comment command.'
 inputs:
   authorization-token:
     description: 'Segment authentication token'
@@ -16,6 +16,14 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Checkout PR head
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
     - name: Install system CA certificates
       run: |
         if [ -f /etc/os-release ]; then
