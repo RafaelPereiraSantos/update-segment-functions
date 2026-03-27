@@ -6,7 +6,6 @@ dependencies = [
     "pyyaml",
     "requests",
     "certifi",
-    "pip-system-certs",
 ]
 requires-python = ">=3.8"
 
