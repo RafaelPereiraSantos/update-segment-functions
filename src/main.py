@@ -16,9 +16,9 @@ from src.segment import (
 )
 
 def main():
-    config_file_path = os.environ.get('INPUT_CONFIGURATION-FILE-PATH') or 'config.yaml'
-    segment_auth_token = os.environ.get('INPUT_SEGMENT-TOKEN') or ''
-    trunk_branch = os.environ.get('INPUT_TRUNK-BRANCH') or ''
+    config_file_path = os.environ.get('INPUT_CONFIGURATION_FILE_PATH') or 'config.yaml'
+    segment_auth_token = os.environ.get('INPUT_SEGMENT_TOKEN') or ''
+    trunk_branch = os.environ.get('INPUT_TRUNK_BRANCH') or ''
     repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
 
     print("starting main script...")
