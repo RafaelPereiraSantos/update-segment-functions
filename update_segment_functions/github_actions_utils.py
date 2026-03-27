@@ -2,12 +2,17 @@ import os
 import subprocess
 from typing import List
 
-def get_changed_files(repository_path: str, base_branch: str = 'main') -> List[str]:
-    is_ci = os.getenv('CI') == 'true'
-
+def get_changed_files(repository_path: str, base_branch: str = 'master') -> List[str]:
     try:
-        check = not is_ci
-        subprocess.run(["git", "fetch", "origin", base_branch], cwd=repository_path, check=check, capture_output=True)
+        fetch_result = subprocess.run(
+            ["git", "fetch", "origin", base_branch],
+            cwd=repository_path,
+            check=False,
+            capture_output=True,
+            text=True
+        )
+        if fetch_result.returncode != 0:
+            print(f"Warning: git fetch failed: {fetch_result.stderr.strip()}")
 
         result = subprocess.run(
             ["git", "diff", "--name-only", f"origin/{base_branch}...HEAD"],
