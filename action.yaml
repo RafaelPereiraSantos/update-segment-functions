@@ -16,36 +16,6 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Resolve PR head SHA
-      run: |
-        PR_NUMBER=${{ github.event.issue.number }}
-        PR_JSON=$(curl -s \
-          -H "Authorization: Bearer ${{ inputs.github-token }}" \
-          -H "Accept: application/vnd.github+json" \
-          "https://api.github.com/repos/${{ github.repository }}/pulls/${PR_NUMBER}")
-
-        PR_HEAD_SHA=$(echo "$PR_JSON" | python3 -c "import sys,json; print(json.load(sys.stdin)['head']['sha'])")
-
-        if [ -z "$PR_HEAD_SHA" ] || [ "$PR_HEAD_SHA" = "None" ]; then
-          echo "Error: could not resolve PR head SHA for PR #${PR_NUMBER}."
-          exit 1
-        fi
-
-        echo "PR head SHA: ${PR_HEAD_SHA}"
-        echo "PR_HEAD_SHA=${PR_HEAD_SHA}" >> $GITHUB_ENV
-      shell: bash
-
-    - name: Checkout PR head
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ env.PR_HEAD_SHA }}
-        token: ${{ inputs.github-token }}
-
-    - name: Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-
     - name: Install system CA certificates
       run: |
         if [ -f /etc/os-release ]; then
