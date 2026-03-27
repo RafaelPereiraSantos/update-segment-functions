@@ -16,10 +16,15 @@ from update_segment_functions.segment import (
 )
 
 def main():
-    config_file_path = os.environ.get('INPUT_CONFIGURATION_FILE_PATH') or 'config.yaml'
-    segment_auth_token = os.environ.get('INPUT_SEGMENT_TOKEN') or ''
-    trunk_branch = os.environ.get('INPUT_TRUNK_BRANCH') or ''
+    config_file_path = os.environ.get('CONFIGURATION_FILE_PATH') or 'config.yaml'
+    segment_auth_token = os.environ.get('SEGMENT_TOKEN') or ''
+    trunk_branch = os.environ.get('TRUNK_BRANCH') or 'master'
     repository_path = os.environ.get('GITHUB_WORKSPACE') or ''
+
+    if not segment_auth_token:
+        raise SystemExit("Error: INPUT_SEGMENT_TOKEN is not set")
+    if not repository_path:
+        raise SystemExit("Error: GITHUB_WORKSPACE is not set")
 
     print("starting main script...")
 

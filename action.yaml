@@ -80,3 +80,7 @@ runs:
     - name: Run main script
       run: update-segment-functions
       shell: bash
+      env:
+        SEGMENT_TOKEN: ${{ inputs.segment-token }}
+        CONFIGURATION_FILE_PATH: ${{ inputs.configuration-file-path }}
+        TRUNK_BRANCH: ${{ inputs.trunk-branch }}
