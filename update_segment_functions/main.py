@@ -40,16 +40,12 @@ def main():
             continue
 
         function_name = function.get('name')
+        function_id = function.get('function_id')
         function_code_path = function.get('code_path', '')
         function_settings_path = function.get('settings_path', '')
 
         full_settings_path = os.path.join(repository_path, function_settings_path)
         settings_data = read_config_file(full_settings_path)
-        function_id = settings_data.get('function_id')
-        if not function_id:
-            print(f"Error: missing 'function_id' in settings file: {full_settings_path}")
-            failed.append(function_name)
-            continue
 
         code = read_raw_string_file(os.path.join(repository_path, function_code_path))
         if not code.strip():
