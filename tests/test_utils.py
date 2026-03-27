@@ -1,7 +1,7 @@
 import pytest
 import os
 import yaml
-from src.utils import read_config_file, read_raw_string_file, validate_function_settings
+from update_segment_functions.utils import read_config_file, read_raw_string_file, validate_function_settings
 
 def test_read_config_file(tmp_path):
     d = tmp_path / "subdir"

@@ -1,16 +1,16 @@
 import os
 
-from src.github_actions_utils import (
+from update_segment_functions.github_actions_utils import (
     get_changed_files,
 )
 
-from src.utils import (
+from update_segment_functions.utils import (
     read_config_file,
     read_raw_string_file,
     validate_function_settings,
 )
 
-from src.segment import (
+from update_segment_functions.segment import (
     update_segment_function,
     validate_settings_payload
 )
